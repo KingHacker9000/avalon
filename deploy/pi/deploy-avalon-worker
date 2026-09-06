@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+APP_ROOT="/srv/avalon"
+REPO_DIR="$APP_ROOT/repo"
+HEALTH_URL="http://100.113.112.87:4173/"
+
+original="${SSH_ORIGINAL_COMMAND:-}"
+if [[ ! "$original" =~ ^deploy[[:space:]]+([0-9a-f]{40})$ ]]; then
+  echo "Avalon deploy worker accepts only: deploy <40-char commit sha>" >&2
+  exit 64
+fi
+REVISION="${BASH_REMATCH[1]}"
+
+if [[ ! -d "$REPO_DIR/.git" ]]; then
+  echo "Avalon repository is missing at $REPO_DIR" >&2
+  exit 1
+fi
+
+# Fetch first, then require the requested revision to be part of origin/main.
+# This keeps the restricted key from being used to execute arbitrary repository
+# objects that were never merged to the production branch.
+git -C "$REPO_DIR" fetch --prune origin main
+git -C "$REPO_DIR" rev-parse --verify "${REVISION}^{commit}" >/dev/null
+if ! git -C "$REPO_DIR" merge-base --is-ancestor "$REVISION" origin/main; then
+  echo "Refusing to deploy a revision that is not on origin/main." >&2
+  exit 65
+fi
+
+export AVALON_APP_ROOT="$APP_ROOT"
+export AVALON_HEALTH_URL="$HEALTH_URL"
+export AVALON_KEEP_RELEASES=4
+
+exec bash "$REPO_DIR/deploy/deploy.sh" "$REVISION"
