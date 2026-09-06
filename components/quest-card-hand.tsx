@@ -3,9 +3,10 @@
 import { Check, Shield, Swords } from 'lucide-react';
 import { useState } from 'react';
 import type { RoomView } from '@/lib/game/engine';
+import { ROLES } from '@/lib/game/roles';
 
 type StoredSession = { code: string; token: string };
-type SubmitState = 'idle' | 'submitting' | 'sealed' | 'error';
+type SubmitState = 'idle' | 'submitting' | 'sealed' | 'blocked' | 'error';
 
 function randomFailFirst() {
   try {
@@ -22,11 +23,24 @@ export function QuestCardHand({ room }: { room: RoomView }) {
   const [failFirst] = useState(randomFailFirst);
   const [state, setState] = useState<SubmitState>('idle');
   const [message, setMessage] = useState('');
+  const loyal = Boolean(
+    room.me.role && ROLES[room.me.role].side === 'good',
+  );
 
   if (!onQuest || room.me.quested) return null;
 
   async function submit(success: boolean) {
     if (state === 'submitting' || state === 'sealed') return;
+
+    /* Both allegiances receive the same visible two-card hand. A loyal player
+       still cannot legally Betray, but refusing that tap locally avoids a noisy
+       round-trip/server error while keeping the public interaction identical. */
+    if (!success && loyal) {
+      setState('blocked');
+      setMessage('Loyal characters cannot Betray. Choose Success to seal your card.');
+      return;
+    }
+
     setState('submitting');
     setMessage('');
     try {
@@ -72,17 +86,21 @@ export function QuestCardHand({ room }: { room: RoomView }) {
     : ([true, false] as const);
 
   return (
-    <section className="table-quest-hand" aria-label="Choose your quest card">
+    <section
+      className="table-quest-hand"
+      aria-label="Choose your quest card"
+      data-state={state}
+    >
       <div className="table-quest-hand-copy">
         <strong>Choose one card</strong>
-        <span>Both cards are shown to every quest member.</span>
+        <span>Your choice stays private.</span>
       </div>
       <div className="table-quest-cards">
         {cards.map((success) => (
           <button
             key={success ? 'success' : 'betray'}
             type="button"
-            className={`table-quest-card ${success ? 'success' : 'fail'}`}
+            className={`table-quest-card ${success ? 'success' : 'fail'} ${state === 'blocked' && !success ? 'blocked' : ''}`}
             disabled={state === 'submitting'}
             aria-label={success ? 'Play Success quest card' : 'Play Betray quest card'}
             onClick={() => void submit(success)}
@@ -96,7 +114,14 @@ export function QuestCardHand({ room }: { room: RoomView }) {
           </button>
         ))}
       </div>
-      <p className={state === 'error' ? 'table-quest-error' : 'table-quest-rule'}>
+      <p
+        className={
+          state === 'error' || state === 'blocked'
+            ? 'table-quest-error'
+            : 'table-quest-rule'
+        }
+        aria-live="polite"
+      >
         {state === 'submitting'
           ? 'Sealing your choice…'
           : message || 'Loyal characters must submit Success. Evil may submit either card.'}
