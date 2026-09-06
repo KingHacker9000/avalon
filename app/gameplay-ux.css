@@ -1,0 +1,299 @@
+/* Gameplay-specific interaction pass from the full mobile play-cycle audit.
+   Loaded after ux-overhaul.css so these rules can stay focused on turn flow. */
+
+/* Room invitations stop being useful once the game has started because mid-game
+   joins are intentionally rejected. Keep the mobile header focused on play. */
+.clean-ui:has(.action-panel) .room-code {
+  display: none;
+}
+
+/* Quest cards are now physical pieces on the table. The legacy action-panel
+   buttons remain in page.tsx for compatibility, but are not presented twice. */
+.clean-ui .phase-quest .vote-actions {
+  display: none;
+}
+
+.clean-ui .phase-quest:has(.vote-actions) {
+  min-height: 112px;
+}
+
+.clean-ui .phase-quest:has(.vote-actions)::after {
+  content: 'Choose one of the two cards on the table.';
+  display: block;
+  margin-top: 5px;
+  color: #aebdb3;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.clean-ui .table-quest-hand,
+.clean-ui .table-quest-sealed {
+  position: absolute;
+  z-index: 15;
+  left: 50%;
+  bottom: 8%;
+  transform: translateX(-50%);
+}
+
+.clean-ui .table-quest-hand {
+  display: grid;
+  width: min(290px, 62%);
+  justify-items: center;
+  gap: 7px;
+  pointer-events: none;
+}
+
+.clean-ui .table-quest-hand-copy {
+  display: grid;
+  max-width: 220px;
+  justify-items: center;
+  gap: 1px;
+  padding: 5px 9px;
+  border: 1px solid #d3bb7a45;
+  border-radius: 999px;
+  background: #0b1b18e8;
+  box-shadow: 0 4px 12px #0007;
+  color: #eee3c8;
+  text-align: center;
+}
+
+.clean-ui .table-quest-hand-copy strong {
+  color: #f0d18a;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 12px;
+}
+
+.clean-ui .table-quest-hand-copy span {
+  color: #a5b4aa;
+  font-size: 8px;
+  line-height: 1.2;
+}
+
+.clean-ui .table-quest-cards {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 14px;
+  pointer-events: auto;
+}
+
+.clean-ui .table-quest-card {
+  position: relative;
+  width: 92px;
+  height: 126px;
+  min-height: 126px;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid #cfb776;
+  border-radius: 10px;
+  background: #16251f;
+  box-shadow:
+    0 4px 0 #0b120f,
+    0 13px 24px #0008,
+    inset 0 0 0 2px #e7cb8430;
+  color: #f4e7c7;
+  touch-action: manipulation;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    filter 0.16s ease;
+}
+
+.clean-ui .table-quest-card:first-child {
+  transform: rotate(-4deg);
+}
+
+.clean-ui .table-quest-card:last-child {
+  transform: rotate(4deg);
+}
+
+.clean-ui .table-quest-card:enabled:hover,
+.clean-ui .table-quest-card:enabled:focus-visible {
+  z-index: 2;
+  transform: translateY(-10px) rotate(0deg) scale(1.03);
+  box-shadow:
+    0 5px 0 #0b120f,
+    0 20px 30px #0009,
+    0 0 0 2px #f0cf7a55;
+  outline: none;
+}
+
+.clean-ui .table-quest-card:enabled:active {
+  transform: translateY(-3px) rotate(0deg) scale(0.99);
+}
+
+.clean-ui .table-quest-card:disabled {
+  cursor: wait;
+  filter: saturate(0.65) brightness(0.85);
+}
+
+.clean-ui .table-quest-card-art {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(0deg, #07100df3 0%, transparent 48%),
+    url('/art/quest-cards.png');
+  background-repeat: no-repeat;
+  background-size:
+    100% 100%,
+    200% 100%;
+}
+
+.clean-ui .table-quest-card.success .table-quest-card-art {
+  background-position:
+    center,
+    left center;
+}
+
+.clean-ui .table-quest-card.fail .table-quest-card-art {
+  background-position:
+    center,
+    right center;
+}
+
+.clean-ui .table-quest-card-label {
+  position: absolute;
+  z-index: 1;
+  right: 5px;
+  bottom: 7px;
+  left: 5px;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  text-shadow: 0 2px 4px #000;
+}
+
+.clean-ui .table-quest-card-label svg {
+  width: 17px;
+  height: 17px;
+}
+
+.clean-ui .table-quest-card.success .table-quest-card-label {
+  color: var(--good);
+}
+
+.clean-ui .table-quest-card.fail .table-quest-card-label {
+  color: var(--evil);
+}
+
+.clean-ui .table-quest-card-label strong {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.clean-ui .table-quest-card-label small {
+  color: #e4dac4;
+  font-size: 7.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.clean-ui .table-quest-rule,
+.clean-ui .table-quest-error {
+  min-height: 20px;
+  max-width: 255px;
+  margin: 0;
+  padding: 3px 7px;
+  border-radius: 7px;
+  background: #0a1715d9;
+  box-shadow: 0 3px 9px #0006;
+  font-size: 8px;
+  line-height: 1.25;
+  text-align: center;
+  pointer-events: none;
+}
+
+.clean-ui .table-quest-rule {
+  color: #aab7ae;
+}
+
+.clean-ui .table-quest-error {
+  border: 1px solid #ff81776b;
+  color: var(--evil);
+}
+
+.clean-ui .table-quest-sealed {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border: 1px solid #84d2aa66;
+  border-radius: 999px;
+  background: #112b23e8;
+  box-shadow: 0 5px 15px #0007;
+  color: var(--good);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.clean-ui .table-quest-sealed svg {
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 600px) {
+  .clean-ui .table-quest-hand {
+    bottom: 6%;
+    width: 68%;
+    gap: 5px;
+  }
+
+  .clean-ui .table-quest-hand-copy {
+    max-width: 190px;
+    padding: 4px 8px;
+  }
+
+  .clean-ui .table-quest-hand-copy strong {
+    font-size: 11px;
+  }
+
+  .clean-ui .table-quest-hand-copy span {
+    display: none;
+  }
+
+  .clean-ui .table-quest-cards {
+    gap: 9px;
+  }
+
+  .clean-ui .table-quest-card {
+    width: 78px;
+    height: 108px;
+    min-height: 108px;
+    border-radius: 8px;
+  }
+
+  .clean-ui .table-quest-card-label {
+    bottom: 5px;
+  }
+
+  .clean-ui .table-quest-card-label strong {
+    font-size: 9.5px;
+  }
+
+  .clean-ui .table-quest-card-label small {
+    font-size: 6.5px;
+  }
+
+  .clean-ui .table-quest-rule,
+  .clean-ui .table-quest-error {
+    max-width: 210px;
+    font-size: 7.5px;
+  }
+}
+
+@media (max-width: 390px) {
+  .clean-ui .table-quest-hand {
+    bottom: 5%;
+  }
+
+  .clean-ui .table-quest-card {
+    width: 70px;
+    height: 98px;
+    min-height: 98px;
+  }
+
+  .clean-ui .table-quest-cards {
+    gap: 7px;
+  }
+}
