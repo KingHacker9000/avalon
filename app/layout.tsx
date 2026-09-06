@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from 'next';
 import { PwaInstall } from '@/components/pwa-install';
+import { SessionRescue } from '@/components/session-rescue';
 import './globals.css';
 import './ux-overhaul.css';
 import './gameplay-ux.css';
 import './pwa.css';
+import './mobile-fluidity.css';
 
 export const metadata: Metadata = {
   title: 'Avalon — The Round Table',
@@ -46,6 +48,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <SessionRescue />
         {children}
         <PwaInstall />
       </body>
