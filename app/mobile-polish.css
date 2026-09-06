@@ -1,0 +1,94 @@
+/* Final small-screen visual corrections from the second Game Studio pass. */
+
+/* Generic button disabled styling should not make the whole round table look
+   inactive. Seats stay fully legible even when they are not the current input. */
+.clean-ui .table-seat:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.clean-ui .pawn-name {
+  max-width: 78px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Four more crests bring the public set to twelve so even a ten-player table can
+   stay visually distinct. */
+.clean-ui .public-avatar.avatar-8 {
+  background: radial-gradient(circle at 35% 24%, #655f92, #36335f 68%, #1a1934);
+  color: #ded9ff;
+}
+.clean-ui .public-avatar.avatar-9 {
+  background: radial-gradient(circle at 35% 24%, #ad8447, #65451f 68%, #30200d);
+  color: #ffe5a6;
+}
+.clean-ui .public-avatar.avatar-10 {
+  background: radial-gradient(circle at 35% 24%, #9b5d72, #5b3041 68%, #2e1822);
+  color: #ffd4e0;
+}
+.clean-ui .public-avatar.avatar-11 {
+  background: radial-gradient(circle at 35% 24%, #537486, #2c4755 68%, #14252d);
+  color: #d5eff9;
+}
+
+/* Give the physical quest tiles names, but only surface the current one on a
+   phone so the centre of the board stays clean. */
+.clean-ui .quest-stop::after {
+  display: block;
+  max-width: 82px;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #abaf99;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 7px;
+  line-height: 1.1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.clean-ui .quest-stop:nth-child(1)::after {
+  content: 'Whispering Woods';
+}
+.clean-ui .quest-stop:nth-child(2)::after {
+  content: 'Broken Crossing';
+}
+.clean-ui .quest-stop:nth-child(3)::after {
+  content: 'Forgotten Chapel';
+}
+.clean-ui .quest-stop:nth-child(4)::after {
+  content: 'Shadowed Keep';
+}
+.clean-ui .quest-stop:nth-child(5)::after {
+  content: 'Gates of Camelot';
+}
+.clean-ui .quest-stop.current::after {
+  color: #ead8aa;
+}
+
+@media (max-width: 600px) {
+  .clean-ui .avatar-options {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .clean-ui .quest-stop:not(.current)::after {
+    display: none;
+  }
+
+  .clean-ui .quest-stop.current::after {
+    max-width: 72px;
+    font-size: 6.5px;
+  }
+
+  .clean-ui .pawn-name {
+    max-width: 66px;
+  }
+}
+
+@media (max-width: 390px) {
+  .clean-ui .tabletop[data-seat-count='9'] .pawn-name,
+  .clean-ui .tabletop[data-seat-count='10'] .pawn-name {
+    max-width: 52px;
+  }
+}

@@ -26,13 +26,30 @@ void test('rooms survive a full process restart, tokens remain valid, fake token
       `import {execute} from ${JSON.stringify(moduleUrl)}; console.log(JSON.stringify(execute({action:'create',name:'Persistent Host'},'')));`,
     );
     const avatarChanged = run(
-      `import {execute} from ${JSON.stringify(moduleUrl)}; console.log(JSON.stringify(execute({action:'avatar',code:${JSON.stringify(created.room.code)},avatar:6},${JSON.stringify(created.token)})));`,
+      `import {execute} from ${JSON.stringify(moduleUrl)}; console.log(JSON.stringify(execute({action:'avatar',code:${JSON.stringify(created.room.code)},avatar:11},${JSON.stringify(created.token)})));`,
     );
     assert.equal(
       avatarChanged.room.players.find((p: { id: string }) => p.id === created.room.me.id)
         .avatar,
-      6,
+      11,
     );
+
+    const joined = run(
+      `import {execute} from ${JSON.stringify(moduleUrl)}; console.log(JSON.stringify(execute({action:'join',name:'Distinct Guest',code:${JSON.stringify(created.room.code)}},'')));`,
+    );
+    const joinedHost = joined.room.players.find(
+      (p: { id: string }) => p.id === created.room.me.id,
+    );
+    const joinedGuest = joined.room.players.find(
+      (p: { id: string }) => p.id === joined.room.me.id,
+    );
+    assert.notEqual(joinedHost.avatar, joinedGuest.avatar);
+
+    const duplicateRejected = run(
+      `import {execute} from ${JSON.stringify(moduleUrl)}; try{execute({action:'avatar',code:${JSON.stringify(created.room.code)},avatar:11},${JSON.stringify(joined.token)});console.log('false')}catch{console.log('true')}`,
+    );
+    assert.equal(duplicateRejected, true);
+
     const resumed = run(
       `import {execute} from ${JSON.stringify(moduleUrl)}; console.log(JSON.stringify(execute({action:'poll',code:${JSON.stringify(created.room.code)}},${JSON.stringify(created.token)})));`,
     );
@@ -41,7 +58,7 @@ void test('rooms survive a full process restart, tokens remain valid, fake token
     assert.equal(
       resumed.room.players.find((p: { id: string }) => p.id === created.room.me.id)
         .avatar,
-      6,
+      11,
     );
     const invalidAvatar = run(
       `import {execute} from ${JSON.stringify(moduleUrl)}; try{execute({action:'avatar',code:${JSON.stringify(created.room.code)},avatar:99},${JSON.stringify(created.token)});console.log('false')}catch{console.log('true')}`,

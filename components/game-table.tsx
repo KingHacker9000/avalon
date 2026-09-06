@@ -8,9 +8,13 @@ import {
   Feather,
   Flame,
   Gem,
+  Heart,
+  Key,
+  Moon,
   Plus,
   Shield,
   Star,
+  Sun,
   Sword,
   Users,
 } from 'lucide-react';
@@ -28,6 +32,10 @@ const AVATARS = [
   { name: 'Star', Icon: Star },
   { name: 'Compass', Icon: Compass },
   { name: 'Shield', Icon: Shield },
+  { name: 'Moon', Icon: Moon },
+  { name: 'Sun', Icon: Sun },
+  { name: 'Heart', Icon: Heart },
+  { name: 'Key', Icon: Key },
 ] as const;
 
 type StoredSession = { code: string; token: string };
@@ -71,10 +79,14 @@ export function GameTable({
 }) {
   const lobby = room.phase === 'lobby';
   const seats = lobby ? room.capacity : room.players.length;
+  const dense = seats >= 9;
   const me = room.players.find((p) => p.id === room.me.id);
   const privateInfoAvailable = room.phase !== 'reveal' || Boolean(me?.ready);
   const [avatarOverride, setAvatarOverride] = useState<number | null>(null);
   const avatarChoice = avatarOverride ?? me?.avatar ?? 0;
+  const takenAvatars = new Set(
+    room.players.filter((p) => p.id !== me?.id).map((p) => p.avatar),
+  );
   const [avatarState, setAvatarState] = useState<'idle' | 'saving' | 'saved' | 'error'>(
     'idle',
   );
@@ -90,10 +102,25 @@ export function GameTable({
           .replace(/pawn/g, 'player');
       }
     });
+
+    const leave = document.querySelector<HTMLButtonElement>(
+      'nav button[aria-label="Leave table"], nav button[aria-label="Step away"]',
+    );
+    if (leave) {
+      const active = room.phase !== 'lobby' && room.phase !== 'finished';
+      leave.setAttribute('aria-label', active ? 'Step away' : 'Leave table');
+      leave.setAttribute('title', active ? 'Step away' : 'Leave table');
+    }
   }, [room.phase, room.round, room.revision]);
 
   async function chooseAvatar(avatar: number) {
-    if (!lobby || avatar === avatarChoice || avatarState === 'saving') return;
+    if (
+      !lobby ||
+      avatar === avatarChoice ||
+      takenAvatars.has(avatar) ||
+      avatarState === 'saving'
+    )
+      return;
     const previousOverride = avatarOverride;
     setAvatarOverride(avatar);
     setAvatarState('saving');
@@ -129,7 +156,12 @@ export function GameTable({
   }
 
   return (
-    <section className="tabletop" aria-label="Round table">
+    <section
+      className="tabletop"
+      aria-label="Round table"
+      data-seat-count={seats}
+      data-phase={room.phase}
+    >
       <div className="tabletop-center">
         {children || (
           <div className="table-lobby-center">
@@ -150,10 +182,11 @@ export function GameTable({
                 <div className="avatar-options" role="radiogroup" aria-label="Public avatar">
                   {AVATARS.map(({ name }, avatar) => {
                     const active = avatar === avatarChoice;
+                    const taken = !active && takenAvatars.has(avatar);
                     return (
                       <label
                         key={name}
-                        title={name}
+                        title={taken ? `${name} — taken` : name}
                         style={{
                           position: 'relative',
                           display: 'grid',
@@ -165,8 +198,14 @@ export function GameTable({
                             : '1px solid transparent',
                           borderRadius: '50%',
                           boxShadow: active ? '0 0 0 2px #e2bf6840' : 'none',
-                          cursor: avatarState === 'saving' ? 'wait' : 'pointer',
-                          opacity: avatarState === 'saving' && !active ? 0.65 : 1,
+                          cursor:
+                            avatarState === 'saving'
+                              ? 'wait'
+                              : taken
+                                ? 'not-allowed'
+                                : 'pointer',
+                          opacity:
+                            taken || (avatarState === 'saving' && !active) ? 0.38 : 1,
                         }}
                       >
                         <input
@@ -174,8 +213,8 @@ export function GameTable({
                           name="public-avatar"
                           value={avatar}
                           checked={active}
-                          disabled={avatarState === 'saving'}
-                          aria-label={name}
+                          disabled={avatarState === 'saving' || taken}
+                          aria-label={taken ? `${name}, taken` : name}
                           onChange={() => void chooseAvatar(avatar)}
                           style={{
                             position: 'absolute',
@@ -190,14 +229,17 @@ export function GameTable({
                     );
                   })}
                 </div>
-                <small className={avatarState === 'error' ? 'evil' : ''}>
+                <small
+                  className={avatarState === 'error' ? 'evil' : ''}
+                  aria-live="polite"
+                >
                   {avatarState === 'saving'
                     ? 'Saving…'
                     : avatarState === 'saved'
                       ? 'Avatar saved'
                       : avatarState === 'error'
                         ? 'Could not save. Try again.'
-                        : 'Public only — it never reveals your secret role.'}
+                        : 'Each player gets a distinct public crest.'}
                 </small>
               </div>
             )}
@@ -215,9 +257,11 @@ export function GameTable({
         {Array.from({ length: seats }, (_, i) => {
           const p = room.players[i];
           const angle = -Math.PI / 2 + (i * Math.PI * 2) / seats;
+          const radiusX = dense ? 42 : 39;
+          const radiusY = dense ? 40 : 41;
           const style = {
-            left: `${50 + Math.cos(angle) * 39}%`,
-            top: `${50 + Math.sin(angle) * 41}%`,
+            left: `${50 + Math.cos(angle) * radiusX}%`,
+            top: `${50 + Math.sin(angle) * radiusY}%`,
           } as CSSProperties;
           if (!p)
             return (
@@ -246,14 +290,16 @@ export function GameTable({
               ? 'Possible Merlin'
               : 'Known evil'
             : '';
+          const shortClue = knowledge?.label === 'Evil' ? 'Evil' : 'Merlin?';
           const myRole = isMe && privateInfoAvailable ? room.me.role : undefined;
+          const selectable = Boolean(onSelect && eligible.includes(p.id));
 
           return (
             <button
               key={p.id}
               style={style}
-              className={`table-seat ${chosen ? 'chosen' : ''} ${isMe ? 'my-seat' : ''}`}
-              disabled={!onSelect || !eligible.includes(p.id)}
+              className={`table-seat ${chosen ? 'chosen' : ''} ${isMe ? 'my-seat' : ''} ${selectable ? 'selectable' : ''}`}
+              disabled={!selectable}
               aria-pressed={onSelect ? chosen : undefined}
               aria-label={`${p.name}${isMe ? ', you' : ''}${leader ? ', leader' : ''}${chosen ? ', selected for quest' : ''}${lobby && p.ready ? ', ready' : ''}${!p.online && !p.bot ? ', reconnecting' : ''}${privateClue ? `, ${privateClue}` : ''}`}
               title={p.name}
@@ -262,8 +308,12 @@ export function GameTable({
               {privateClue && (
                 <span
                   className={`private-knowledge-tag ${knowledge?.label === 'Evil' ? 'evil' : 'clue'}`}
+                  title={privateClue}
                 >
-                  {privateClue}
+                  <span className="clue-long">{privateClue}</span>
+                  <span className="clue-short" aria-hidden="true">
+                    {shortClue}
+                  </span>
                 </span>
               )}
               <span className="avatar-piece">
