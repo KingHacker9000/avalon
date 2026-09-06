@@ -5,6 +5,10 @@ APP_ROOT="/srv/avalon"
 REPO_DIR="$APP_ROOT/repo"
 HEALTH_URL="http://100.113.112.87:4173/"
 
+# Avalon intentionally uses an isolated Node 24 runtime so upgrading it does not
+# change the Pi's system-wide Node version used by other services.
+export PATH="/opt/node-v24/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
 original="${SSH_ORIGINAL_COMMAND:-}"
 if [[ ! "$original" =~ ^deploy[[:space:]]+([0-9a-f]{40})$ ]]; then
   echo "Avalon deploy worker accepts only: deploy <40-char commit sha>" >&2
@@ -14,6 +18,11 @@ REVISION="${BASH_REMATCH[1]}"
 
 if [[ ! -d "$REPO_DIR/.git" ]]; then
   echo "Avalon repository is missing at $REPO_DIR" >&2
+  exit 1
+fi
+
+if [[ ! -x /opt/node-v24/bin/node || ! -x /opt/node-v24/bin/npm ]]; then
+  echo "Avalon Node 24 runtime is missing under /opt/node-v24." >&2
   exit 1
 fi
 
@@ -29,6 +38,7 @@ fi
 
 export AVALON_APP_ROOT="$APP_ROOT"
 export AVALON_HEALTH_URL="$HEALTH_URL"
-export AVALON_KEEP_RELEASES=4
+# The Pi root filesystem is intentionally kept lean; retain current + one rollback.
+export AVALON_KEEP_RELEASES=2
 
 exec bash "$REPO_DIR/deploy/deploy.sh" "$REVISION"
