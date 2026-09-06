@@ -17,6 +17,7 @@ import {
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { RoomView } from '@/lib/game/engine';
 import { ROLES } from '@/lib/game/roles';
+import { QuestCardHand } from '@/components/quest-card-hand';
 
 const AVATARS = [
   { name: 'Crown', Icon: Crown },
@@ -203,6 +204,10 @@ export function GameTable({
           </div>
         )}
       </div>
+      <QuestCardHand
+        key={`${room.code}:${room.round}:${room.history.length}:${room.team.join('.')}:${room.me.id}`}
+        room={room}
+      />
       <fieldset
         className="table-seats"
         aria-label={onSelect ? 'Tap an avatar to choose a player' : 'Players at the table'}
