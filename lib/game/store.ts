@@ -90,7 +90,17 @@ export function execute(input: Record<string, unknown>, bearer: string) {
         const player = room.players.find((p) => p.tokenHash === hash(bearer));
         ensure(player, 'This seat is no longer available.');
         player.seen = Date.now();
-        if (action === 'poll') {
+        if (action === 'avatar') {
+          ensure(room.phase === 'lobby', 'Public avatars are locked after the game starts.');
+          const avatar = Number(input.avatar);
+          ensure(
+            Number.isInteger(avatar) && avatar >= 0 && avatar < 8,
+            'Choose one of the available public avatars.',
+          );
+          player.avatar = avatar;
+          room.updated = Date.now();
+          room.revision++;
+        } else if (action === 'poll') {
           botStep(room);
           room.updated = Date.now();
         } else act(room, player.id, action, input);
