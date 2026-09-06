@@ -71,6 +71,7 @@ export function GameTable({
 }) {
   const lobby = room.phase === 'lobby';
   const seats = lobby ? room.capacity : room.players.length;
+  const dense = seats >= 9;
   const me = room.players.find((p) => p.id === room.me.id);
   const privateInfoAvailable = room.phase !== 'reveal' || Boolean(me?.ready);
   const [avatarOverride, setAvatarOverride] = useState<number | null>(null);
@@ -129,7 +130,12 @@ export function GameTable({
   }
 
   return (
-    <section className="tabletop" aria-label="Round table">
+    <section
+      className="tabletop"
+      aria-label="Round table"
+      data-seat-count={seats}
+      data-phase={room.phase}
+    >
       <div className="tabletop-center">
         {children || (
           <div className="table-lobby-center">
@@ -190,7 +196,10 @@ export function GameTable({
                     );
                   })}
                 </div>
-                <small className={avatarState === 'error' ? 'evil' : ''}>
+                <small
+                  className={avatarState === 'error' ? 'evil' : ''}
+                  aria-live="polite"
+                >
                   {avatarState === 'saving'
                     ? 'Saving…'
                     : avatarState === 'saved'
@@ -215,9 +224,11 @@ export function GameTable({
         {Array.from({ length: seats }, (_, i) => {
           const p = room.players[i];
           const angle = -Math.PI / 2 + (i * Math.PI * 2) / seats;
+          const radiusX = dense ? 42 : 39;
+          const radiusY = dense ? 40 : 41;
           const style = {
-            left: `${50 + Math.cos(angle) * 39}%`,
-            top: `${50 + Math.sin(angle) * 41}%`,
+            left: `${50 + Math.cos(angle) * radiusX}%`,
+            top: `${50 + Math.sin(angle) * radiusY}%`,
           } as CSSProperties;
           if (!p)
             return (
@@ -246,14 +257,16 @@ export function GameTable({
               ? 'Possible Merlin'
               : 'Known evil'
             : '';
+          const shortClue = knowledge?.label === 'Evil' ? 'Evil' : 'Merlin?';
           const myRole = isMe && privateInfoAvailable ? room.me.role : undefined;
+          const selectable = Boolean(onSelect && eligible.includes(p.id));
 
           return (
             <button
               key={p.id}
               style={style}
-              className={`table-seat ${chosen ? 'chosen' : ''} ${isMe ? 'my-seat' : ''}`}
-              disabled={!onSelect || !eligible.includes(p.id)}
+              className={`table-seat ${chosen ? 'chosen' : ''} ${isMe ? 'my-seat' : ''} ${selectable ? 'selectable' : ''}`}
+              disabled={!selectable}
               aria-pressed={onSelect ? chosen : undefined}
               aria-label={`${p.name}${isMe ? ', you' : ''}${leader ? ', leader' : ''}${chosen ? ', selected for quest' : ''}${lobby && p.ready ? ', ready' : ''}${!p.online && !p.bot ? ', reconnecting' : ''}${privateClue ? `, ${privateClue}` : ''}`}
               title={p.name}
@@ -262,8 +275,12 @@ export function GameTable({
               {privateClue && (
                 <span
                   className={`private-knowledge-tag ${knowledge?.label === 'Evil' ? 'evil' : 'clue'}`}
+                  title={privateClue}
                 >
-                  {privateClue}
+                  <span className="clue-long">{privateClue}</span>
+                  <span className="clue-short" aria-hidden="true">
+                    {shortClue}
+                  </span>
                 </span>
               )}
               <span className="avatar-piece">
