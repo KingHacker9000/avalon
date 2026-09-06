@@ -8,9 +8,13 @@ import {
   Feather,
   Flame,
   Gem,
+  Heart,
+  Key,
+  Moon,
   Plus,
   Shield,
   Star,
+  Sun,
   Sword,
   Users,
 } from 'lucide-react';
@@ -28,6 +32,10 @@ const AVATARS = [
   { name: 'Star', Icon: Star },
   { name: 'Compass', Icon: Compass },
   { name: 'Shield', Icon: Shield },
+  { name: 'Moon', Icon: Moon },
+  { name: 'Sun', Icon: Sun },
+  { name: 'Heart', Icon: Heart },
+  { name: 'Key', Icon: Key },
 ] as const;
 
 type StoredSession = { code: string; token: string };
@@ -76,6 +84,9 @@ export function GameTable({
   const privateInfoAvailable = room.phase !== 'reveal' || Boolean(me?.ready);
   const [avatarOverride, setAvatarOverride] = useState<number | null>(null);
   const avatarChoice = avatarOverride ?? me?.avatar ?? 0;
+  const takenAvatars = new Set(
+    room.players.filter((p) => p.id !== me?.id).map((p) => p.avatar),
+  );
   const [avatarState, setAvatarState] = useState<'idle' | 'saving' | 'saved' | 'error'>(
     'idle',
   );
@@ -91,10 +102,25 @@ export function GameTable({
           .replace(/pawn/g, 'player');
       }
     });
+
+    const leave = document.querySelector<HTMLButtonElement>(
+      'nav button[aria-label="Leave table"], nav button[aria-label="Step away"]',
+    );
+    if (leave) {
+      const active = room.phase !== 'lobby' && room.phase !== 'finished';
+      leave.setAttribute('aria-label', active ? 'Step away' : 'Leave table');
+      leave.setAttribute('title', active ? 'Step away' : 'Leave table');
+    }
   }, [room.phase, room.round, room.revision]);
 
   async function chooseAvatar(avatar: number) {
-    if (!lobby || avatar === avatarChoice || avatarState === 'saving') return;
+    if (
+      !lobby ||
+      avatar === avatarChoice ||
+      takenAvatars.has(avatar) ||
+      avatarState === 'saving'
+    )
+      return;
     const previousOverride = avatarOverride;
     setAvatarOverride(avatar);
     setAvatarState('saving');
@@ -156,10 +182,11 @@ export function GameTable({
                 <div className="avatar-options" role="radiogroup" aria-label="Public avatar">
                   {AVATARS.map(({ name }, avatar) => {
                     const active = avatar === avatarChoice;
+                    const taken = !active && takenAvatars.has(avatar);
                     return (
                       <label
                         key={name}
-                        title={name}
+                        title={taken ? `${name} — taken` : name}
                         style={{
                           position: 'relative',
                           display: 'grid',
@@ -171,8 +198,14 @@ export function GameTable({
                             : '1px solid transparent',
                           borderRadius: '50%',
                           boxShadow: active ? '0 0 0 2px #e2bf6840' : 'none',
-                          cursor: avatarState === 'saving' ? 'wait' : 'pointer',
-                          opacity: avatarState === 'saving' && !active ? 0.65 : 1,
+                          cursor:
+                            avatarState === 'saving'
+                              ? 'wait'
+                              : taken
+                                ? 'not-allowed'
+                                : 'pointer',
+                          opacity:
+                            taken || (avatarState === 'saving' && !active) ? 0.38 : 1,
                         }}
                       >
                         <input
@@ -180,8 +213,8 @@ export function GameTable({
                           name="public-avatar"
                           value={avatar}
                           checked={active}
-                          disabled={avatarState === 'saving'}
-                          aria-label={name}
+                          disabled={avatarState === 'saving' || taken}
+                          aria-label={taken ? `${name}, taken` : name}
                           onChange={() => void chooseAvatar(avatar)}
                           style={{
                             position: 'absolute',
@@ -206,7 +239,7 @@ export function GameTable({
                       ? 'Avatar saved'
                       : avatarState === 'error'
                         ? 'Could not save. Try again.'
-                        : 'Public only — it never reveals your secret role.'}
+                        : 'Each player gets a distinct public crest.'}
                 </small>
               </div>
             )}
