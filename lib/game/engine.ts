@@ -1,14 +1,17 @@
 import { randomInt, randomUUID } from 'node:crypto';
 import { ROLES, OPTIONAL, TEAM_SIZES, EVIL_COUNT, type Role } from './roles.ts';
+
 export type Phase =
   | 'lobby'
   | 'reveal'
   | 'team'
   | 'vote'
+  | 'vote-result'
   | 'quest'
   | 'result'
   | 'assassinate'
   | 'finished';
+
 export type Player = {
   id: string;
   name: string;
@@ -19,6 +22,7 @@ export type Player = {
   seen: number;
   role?: Role;
 };
+
 export type Proposal = {
   quest: number;
   leader: string;
@@ -26,7 +30,9 @@ export type Proposal = {
   votes: Record<string, boolean>;
   approved: boolean;
 };
+
 export type Quest = { team: string[]; fails: number; success: boolean };
+
 export type Room = {
   code: string;
   host: string;
@@ -46,12 +52,22 @@ export type Room = {
   log: string[];
   winner?: 'good' | 'evil';
   reason?: string;
+  phaseEndsAt?: number;
   updated: number;
   revision: number;
 };
+
+export const PUBLIC_AVATAR_COUNT = 12;
+export const ONLINE_WINDOW_MS = 25_000;
+export const VOTE_REVEAL_MS = 4_800;
+export const QUEST_RESULT_MS = 6_500;
+export const HOST_RECOVERY_GRACE_MS = 75_000;
+export const ACTIVE_RECOVERY_GRACE_MS = 90_000;
+
 export function ensure(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
+
 function shuffle<T>(items: T[]): T[] {
   const a = [...items];
   for (let i = a.length - 1; i > 0; i--) {
@@ -60,6 +76,7 @@ function shuffle<T>(items: T[]): T[] {
   }
   return a;
 }
+
 export function createRoom(
   code: string,
   player: Player,
@@ -86,6 +103,7 @@ export function createRoom(
     revision: 0,
   };
 }
+
 export function makePlayer(
   name: unknown,
   tokenHash: string,
@@ -107,12 +125,13 @@ export function makePlayer(
     id: randomUUID(),
     name: name.trim(),
     tokenHash,
-    avatar: randomInt(8),
+    avatar: randomInt(PUBLIC_AVATAR_COUNT),
     ready: false,
     bot,
     seen: Date.now(),
   };
 }
+
 export function joinRoom(room: Room, player: Player) {
   ensure(room.phase === 'lobby', 'This game has already started.');
   ensure(!room.practice, 'Practice tables are solo.');
@@ -126,15 +145,38 @@ export function joinRoom(room: Room, player: Player) {
   room.players.push(player);
   room.log.push(`${player.name} joined the table.`);
 }
+
 function finish(room: Room, winner: 'good' | 'evil', reason: string) {
   room.phase = 'finished';
+  room.phaseEndsAt = undefined;
   room.winner = winner;
   room.reason = reason;
   room.log.push(reason);
 }
+
 function nextLeader(room: Room) {
   room.leader = (room.leader + 1) % room.players.length;
 }
+
+function resetRound(room: Room, message: string) {
+  room.phase = 'lobby';
+  room.phaseEndsAt = undefined;
+  room.round = 0;
+  room.rejections = 0;
+  room.team = [];
+  room.votes = {};
+  room.cards = {};
+  room.quests = [];
+  room.history = [];
+  room.winner = undefined;
+  room.reason = undefined;
+  room.players.forEach((p) => {
+    p.role = undefined;
+    p.ready = p.bot;
+  });
+  room.log = [message];
+}
+
 export function deckFor(count: number, optional: Role[]): Role[] {
   ensure(TEAM_SIZES[count], 'Avalon needs 5–10 players.');
   ensure(
@@ -159,6 +201,7 @@ export function deckFor(count: number, optional: Role[]): Role[] {
   while (good.length < count - EVIL_COUNT[count]) good.push('Servant');
   return [...good, ...evil];
 }
+
 export function knowledge(room: Room, p: Player) {
   const role = p.role;
   if (!role) return [];
@@ -180,6 +223,7 @@ export function knowledge(room: Room, p: Player) {
       label: role === 'Percival' ? 'Merlin or Morgana' : 'Evil',
     }));
 }
+
 function resolveVotes(room: Room) {
   if (Object.keys(room.votes).length !== room.players.length) return;
   const approved =
@@ -193,25 +237,16 @@ function resolveVotes(room: Room) {
   });
   room.votes = {};
   if (approved) {
-    room.phase = 'quest';
     room.rejections = 0;
     room.log.push(`Quest ${room.round + 1}: the team was approved.`);
   } else {
     room.rejections++;
     room.log.push(`Team rejected (${room.rejections}/5).`);
-    if (room.rejections === 5)
-      finish(
-        room,
-        'evil',
-        'Five teams were rejected. The kingdom falls to evil.',
-      );
-    else {
-      nextLeader(room);
-      room.team = [];
-      room.phase = 'team';
-    }
   }
+  room.phase = 'vote-result';
+  room.phaseEndsAt = Date.now() + VOTE_REVEAL_MS;
 }
+
 function resolveQuest(room: Room) {
   if (Object.keys(room.cards).length !== room.team.length) return;
   const fails = Object.values(room.cards).filter((v) => !v).length;
@@ -220,11 +255,19 @@ function resolveQuest(room: Room) {
   room.quests.push({ team: [...room.team], fails, success });
   room.cards = {};
   room.log.push(
-    `Quest ${room.round + 1} ${success ? 'succeeded' : 'failed'} with ${fails} fail ${fails === 1 ? 'card' : 'cards'}.`,
+    `Quest ${room.round + 1} ${success ? 'succeeded' : 'failed'} with ${fails} Betray ${fails === 1 ? 'card' : 'cards'}.`,
   );
   room.phase = 'result';
-  room.players.forEach((p) => (p.ready = p.bot));
+  room.phaseEndsAt = Date.now() + QUEST_RESULT_MS;
+  room.players.forEach((p) => (p.ready = false));
 }
+
+function staleHuman(room: Room, now: number) {
+  return room.players.some(
+    (p) => !p.bot && now - p.seen >= ACTIVE_RECOVERY_GRACE_MS,
+  );
+}
+
 export function act(
   room: Room,
   id: string,
@@ -255,9 +298,7 @@ export function act(
     }
     case 'ready': {
       ensure(
-        room.phase === 'lobby' ||
-          room.phase === 'reveal' ||
-          room.phase === 'result',
+        room.phase === 'lobby' || room.phase === 'reveal',
         'There is nothing to confirm right now.',
       );
       p.ready = data.ready !== false;
@@ -278,6 +319,7 @@ export function act(
       });
       room.leader = randomInt(room.players.length);
       room.phase = 'reveal';
+      room.phaseEndsAt = undefined;
       room.log.push('Roles have been dealt. Keep your identity secret.');
       break;
     }
@@ -295,12 +337,13 @@ export function act(
       const team = data.team as string[];
       ensure(
         new Set(team).size === team.length &&
-          team.every((id) => room.players.some((p) => p.id === id)),
+          team.every((memberId) => room.players.some((player) => player.id === memberId)),
         'Choose distinct players at this table.',
       );
       room.team = team;
       room.votes = {};
       room.phase = 'vote';
+      room.phaseEndsAt = undefined;
       break;
     }
     case 'vote': {
@@ -331,7 +374,7 @@ export function act(
         room.phase === 'assassinate' && p.role === 'Assassin',
         'Only the Assassin may make the final choice.',
       );
-      const target = room.players.find((p) => p.id === data.target);
+      const target = room.players.find((player) => player.id === data.target);
       ensure(
         target && target.role && target.id !== id,
         'Choose another player as your target.',
@@ -346,15 +389,29 @@ export function act(
       );
       break;
     }
+    case 'restart-round': {
+      host();
+      ensure(
+        room.phase !== 'lobby' && room.phase !== 'finished',
+        'There is no active round to restart.',
+      );
+      ensure(
+        staleHuman(room, Date.now()),
+        'Round recovery becomes available after a player has been disconnected for a while.',
+      );
+      resetRound(room, 'The host restarted the round after a prolonged disconnect.');
+      break;
+    }
     case 'remove': {
       host();
       ensure(room.phase === 'lobby', 'Seats cannot be removed during a game.');
       ensure(data.target !== id, 'Use Leave table to leave.');
       ensure(
-        room.players.some((p) => p.id === data.target),
+        room.players.some((player) => player.id === data.target),
         'That player is not at this table.',
       );
-      room.players = room.players.filter((p) => p.id !== data.target);
+      room.players = room.players.filter((player) => player.id !== data.target);
+      if (room.leader >= room.players.length) room.leader = 0;
       break;
     }
     case 'leave': {
@@ -362,30 +419,17 @@ export function act(
         room.phase === 'lobby' || room.phase === 'finished',
         'An active seat is reserved so you can reconnect.',
       );
-      room.players = room.players.filter((p) => p.id !== id);
+      room.players = room.players.filter((player) => player.id !== id);
       if (room.host === id)
         room.host =
-          room.players.find((p) => !p.bot)?.id ?? room.players[0]?.id ?? '';
+          room.players.find((player) => !player.bot)?.id ?? room.players[0]?.id ?? '';
+      if (room.leader >= room.players.length) room.leader = 0;
       break;
     }
     case 'rematch': {
       host();
       ensure(room.phase === 'finished', 'Finish this game first.');
-      room.phase = 'lobby';
-      room.round = 0;
-      room.rejections = 0;
-      room.team = [];
-      room.votes = {};
-      room.cards = {};
-      room.quests = [];
-      room.history = [];
-      room.winner = undefined;
-      room.reason = undefined;
-      room.players.forEach((p) => {
-        p.role = undefined;
-        p.ready = p.bot;
-      });
-      room.log = ['A new game awaits.'];
+      resetRound(room, 'A new game awaits.');
       break;
     }
     default:
@@ -395,17 +439,42 @@ export function act(
   room.updated = Date.now();
   room.revision++;
 }
+
 function advance(room: Room) {
   if (room.phase === 'reveal' && room.players.every((p) => p.ready)) {
     room.phase = 'team';
+    room.phaseEndsAt = undefined;
     room.players.forEach((p) => (p.ready = false));
   }
-  if (room.phase === 'result' && room.players.every((p) => p.ready)) {
+}
+
+export function tick(room: Room, now = Date.now()) {
+  if (!room.phaseEndsAt || now < room.phaseEndsAt) return false;
+
+  if (room.phase === 'vote-result') {
+    const proposal = room.history.at(-1);
+    room.phaseEndsAt = undefined;
+    if (!proposal) return false;
+    if (proposal.approved) {
+      room.phase = 'quest';
+    } else if (room.rejections >= 5) {
+      finish(
+        room,
+        'evil',
+        'Five teams were rejected. The kingdom falls to evil.',
+      );
+    } else {
+      nextLeader(room);
+      room.team = [];
+      room.phase = 'team';
+    }
+  } else if (room.phase === 'result') {
+    room.phaseEndsAt = undefined;
     const good = room.quests.filter((q) => q.success).length;
     const evil = room.quests.length - good;
-    if (evil === 3)
+    if (evil === 3) {
       finish(room, 'evil', 'Three quests were sabotaged. Camelot has fallen.');
-    else if (good === 3) {
+    } else if (good === 3) {
       room.phase = 'assassinate';
       room.log.push(
         'Three quests succeeded. The Assassin has one final chance.',
@@ -416,8 +485,55 @@ function advance(room: Room) {
       room.team = [];
       room.phase = 'team';
     }
+  } else {
+    room.phaseEndsAt = undefined;
+    return false;
   }
+
+  room.updated = now;
+  room.revision++;
+  return true;
 }
+
+export function recoverOfflineHost(room: Room, now = Date.now()) {
+  const host = room.players.find((p) => p.id === room.host);
+  if (!host || host.bot) return false;
+  const grace = room.phase === 'lobby' ? HOST_RECOVERY_GRACE_MS : ACTIVE_RECOVERY_GRACE_MS;
+  if (now - host.seen < grace) return false;
+
+  const next = room.players.find(
+    (p) => p.id !== host.id && !p.bot && now - p.seen < ONLINE_WINDOW_MS,
+  );
+  if (!next) return false;
+
+  room.host = next.id;
+  room.log.push(`${next.name} became table host after the previous host disconnected.`);
+  room.updated = now;
+  room.revision++;
+  return true;
+}
+
+export function recoverOfflineLeader(room: Room, now = Date.now()) {
+  if (room.phase !== 'team' || room.players.length < 2) return false;
+  const leader = room.players[room.leader];
+  if (!leader || leader.bot || now - leader.seen < ACTIVE_RECOVERY_GRACE_MS)
+    return false;
+
+  for (let offset = 1; offset < room.players.length; offset++) {
+    const index = (room.leader + offset) % room.players.length;
+    const candidate = room.players[index];
+    if (candidate.bot || now - candidate.seen < ONLINE_WINDOW_MS) {
+      room.leader = index;
+      room.team = [];
+      room.log.push(`Leadership passed after ${leader.name} remained disconnected.`);
+      room.updated = now;
+      room.revision++;
+      return true;
+    }
+  }
+  return false;
+}
+
 export function addPracticePlayers(room: Room) {
   ensure(room.practice, 'Not a practice room.');
   for (const name of ['Guinevere', 'Gawain', 'Tristan', 'Isolde']) {
@@ -426,6 +542,7 @@ export function addPracticePlayers(room: Room) {
     room.players.push(p);
   }
 }
+
 export function botStep(room: Room) {
   if (!room.practice) return;
   const bots = room.players.filter((p) => p.bot);
@@ -466,9 +583,16 @@ export function botStep(room: Room) {
     }
   }
 }
+
 export function publicView(room: Room, id: string) {
   const me = room.players.find((p) => p.id === id);
   ensure(me, 'Your seat could not be found.');
+  const now = Date.now();
+  const canRestartRound =
+    room.host === id &&
+    room.phase !== 'lobby' &&
+    room.phase !== 'finished' &&
+    staleHuman(room, now);
   return {
     code: room.code,
     host: room.host,
@@ -485,7 +609,9 @@ export function publicView(room: Room, id: string) {
     log: room.log.slice(-30),
     winner: room.winner,
     reason: room.reason,
+    phaseEndsAt: room.phaseEndsAt,
     revision: room.revision,
+    recovery: { canRestartRound },
     teamSizes: TEAM_SIZES[room.players.length] ?? TEAM_SIZES[room.capacity],
     players: room.players.map((p) => ({
       id: p.id,
@@ -493,7 +619,7 @@ export function publicView(room: Room, id: string) {
       avatar: p.avatar,
       ready: p.ready,
       bot: p.bot,
-      online: p.bot || Date.now() - p.seen < 25000,
+      online: p.bot || now - p.seen < ONLINE_WINDOW_MS,
       ...(room.phase === 'finished' ? { role: p.role } : {}),
     })),
     me: {
@@ -511,4 +637,5 @@ export function publicView(room: Room, id: string) {
           : room.players.filter((p) => p.ready).length,
   };
 }
+
 export type RoomView = ReturnType<typeof publicView>;
