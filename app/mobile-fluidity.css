@@ -1,0 +1,520 @@
+/* Game Studio mobile/web fluidity pass — September 2026.
+   This layer loads last and focuses on one-handed play, PWA safety, dense-table
+   readability, tactile state changes, and keeping the table visually dominant. */
+
+/* ----- PWA + viewport behaviour ----- */
+
+.clean-ui {
+  min-height: 100dvh;
+}
+
+/* The install CTA is useful before a game, but becomes intrusive/dead chrome
+   once somebody is already at a table. */
+body:has(.clean-ui.in-game) .pwa-install {
+  display: none;
+}
+
+/* On a restored PWA/mobile session, private role content stays visually locked
+   until SessionRescue has told the existing role UI to conceal itself. */
+html[data-avalon-resume-privacy='locked'] .role-strip,
+html[data-avalon-resume-privacy='locked'] .private-knowledge-tag,
+html[data-avalon-resume-privacy='locked'] .private-seat-note {
+  visibility: hidden !important;
+}
+
+@supports (padding-top: env(safe-area-inset-top)) {
+  .clean-ui header {
+    height: calc(68px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+    padding-right: max(18px, env(safe-area-inset-right));
+    padding-left: max(18px, env(safe-area-inset-left));
+  }
+}
+
+/* The previous fixed 760–820px hero was taller than several real phones. Keep
+   the first actionable surface within a modern small viewport and let content
+   grow naturally when needed. */
+@media (max-width: 600px) {
+  .clean-ui .home-stage {
+    min-height: calc(100svh - 68px);
+    padding-top: clamp(26px, 5svh, 44px);
+    padding-bottom: max(34px, env(safe-area-inset-bottom));
+  }
+
+  .clean-ui .entry-panel input,
+  .clean-ui .entry-panel select {
+    font-size: 16px;
+  }
+}
+
+/* ----- Table depth and dense seating ----- */
+
+.clean-ui .tabletop {
+  isolation: isolate;
+  box-shadow:
+    inset 0 0 90px #07110e70,
+    0 20px 45px #0007;
+}
+
+.clean-ui .tabletop::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 50% 46%, #e8d49c0d 0 16%, transparent 44%),
+    radial-gradient(circle at 50% 52%, transparent 45%, #02080744 100%);
+  pointer-events: none;
+}
+
+.clean-ui .tabletop-center,
+.clean-ui .table-seats,
+.clean-ui .table-quest-hand,
+.clean-ui .table-quest-sealed {
+  z-index: 2;
+}
+
+/* Keep the current quest visually alive without turning the whole board into an
+   animated dashboard. */
+.clean-ui .quest-stop.current .quest-medallion {
+  position: relative;
+}
+
+.clean-ui .quest-stop.current .quest-medallion::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 1px solid #efd58a70;
+  border-radius: 50%;
+  opacity: 0.55;
+}
+
+.clean-ui .leader-coin,
+.clean-ui .team-coin,
+.clean-ui .chosen .public-avatar {
+  transition:
+    transform 180ms ease,
+    filter 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.clean-ui .table-seat.selectable:active .avatar-piece {
+  transform: translateY(-1px) scale(0.96);
+}
+
+/* Ten-player phones need a little more circumference and shorter private labels
+   so clue chips and role notes do not collide with neighbouring seats. */
+.clean-ui .tabletop[data-seat-count='9'] .table-seat,
+.clean-ui .tabletop[data-seat-count='10'] .table-seat {
+  width: 58px;
+}
+
+.clean-ui .tabletop[data-seat-count='9'] .pawn-name,
+.clean-ui .tabletop[data-seat-count='10'] .pawn-name {
+  max-width: 60px;
+}
+
+.clue-short {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .clean-ui .private-knowledge-tag .clue-long {
+    display: none;
+  }
+
+  .clean-ui .private-knowledge-tag .clue-short {
+    display: inline;
+  }
+
+  .clean-ui .private-knowledge-tag {
+    max-width: 58px;
+    white-space: nowrap;
+  }
+
+  .clean-ui .tabletop[data-seat-count='9'] .public-avatar,
+  .clean-ui .tabletop[data-seat-count='10'] .public-avatar {
+    width: 38px;
+    height: 38px;
+  }
+
+  .clean-ui .tabletop[data-seat-count='9'] .avatar-piece,
+  .clean-ui .tabletop[data-seat-count='10'] .avatar-piece {
+    width: 42px;
+    height: 42px;
+  }
+
+  .clean-ui .tabletop[data-seat-count='9'] .private-seat-note,
+  .clean-ui .tabletop[data-seat-count='10'] .private-seat-note {
+    top: 62px;
+    width: 66px;
+    font-size: 7.5px;
+  }
+
+  .clean-ui .tabletop[data-seat-count='9'] .pawn-you,
+  .clean-ui .tabletop[data-seat-count='10'] .pawn-you {
+    top: 56px;
+  }
+}
+
+/* ----- Quest hand: focus the decision in the safe center of the table ----- */
+
+/* The previous bottom-anchored hand could physically cover the player seated at
+   six o'clock on 8–10 player phone layouts. Put the temporary hand in the felt
+   centre instead and softly recede the quest track while the choice is active. */
+.clean-ui .table-quest-hand,
+.clean-ui .table-quest-sealed {
+  top: 50%;
+  bottom: auto;
+  transform: translate(-50%, -48%);
+}
+
+.clean-ui .tabletop:has(.table-quest-hand) .quest-board {
+  opacity: 0.32;
+  filter: saturate(0.7) brightness(0.8);
+  transform: scale(0.96);
+  transition:
+    opacity 180ms ease,
+    filter 180ms ease,
+    transform 180ms ease;
+}
+
+.clean-ui .table-quest-hand {
+  width: min(300px, 64%);
+}
+
+.clean-ui .table-quest-card.blocked {
+  border-color: #ff8b808f;
+  box-shadow:
+    0 4px 0 #0b120f,
+    0 13px 24px #0008,
+    0 0 0 2px #ff83743d;
+}
+
+.clean-ui .table-quest-hand[data-state='submitting'] .table-quest-card {
+  transform: translateY(1px) scale(0.985);
+}
+
+.clean-ui .table-quest-sealed {
+  animation: card-sealed-pop 220ms ease-out both;
+}
+
+@keyframes card-sealed-pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -42%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -48%) scale(1);
+  }
+}
+
+@media (max-width: 600px) {
+  .clean-ui .table-quest-hand {
+    top: 50%;
+    bottom: auto;
+    width: 62%;
+  }
+
+  .clean-ui .table-quest-card {
+    width: 74px;
+    height: 103px;
+    min-height: 103px;
+  }
+
+  .clean-ui .table-quest-rule,
+  .clean-ui .table-quest-error {
+    max-width: 190px;
+    padding: 4px 7px;
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 390px) {
+  .clean-ui .table-quest-hand {
+    top: 49%;
+    bottom: auto;
+    width: 60%;
+  }
+
+  .clean-ui .table-quest-card {
+    width: 68px;
+    height: 94px;
+    min-height: 94px;
+  }
+}
+
+/* ----- Active-game information hierarchy ----- */
+
+/* The player's own role already appears beneath their avatar. On a phone the
+   persistent role strip should therefore be a compact private identity rail,
+   not another large card consuming the top third of the game. */
+@media (max-width: 600px) {
+  .clean-ui .role-strip {
+    min-height: 52px;
+    margin: 0 2px 10px;
+    padding: 7px 9px;
+    border-radius: 12px;
+  }
+
+  .clean-ui .role-strip:not(.concealed) .role-portrait-button,
+  .clean-ui .role-strip:not(.concealed) .role-portrait-button .portrait {
+    width: 40px;
+    height: 40px;
+  }
+
+  .clean-ui .role-strip-heading h2 {
+    font-size: 16px;
+  }
+
+  .clean-ui .role-strip-content > p,
+  .clean-ui .role-strip .known-players {
+    display: none;
+  }
+
+  .clean-ui .role-strip > .icon-button {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+  }
+
+  .clean-ui .role-strip.concealed {
+    min-height: 44px;
+    justify-content: center;
+  }
+}
+
+/* A small phase eyebrow gives orientation without adding another permanent
+   header bar. */
+.clean-ui .action-panel::before {
+  display: block;
+  margin-bottom: 2px;
+  color: #c8b678;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.clean-ui .action-panel.phase-reveal::before {
+  content: 'Private reveal';
+}
+.clean-ui .action-panel.phase-team::before {
+  content: 'Build the quest party';
+}
+.clean-ui .action-panel.phase-vote::before {
+  content: 'Team vote';
+}
+.clean-ui .action-panel.phase-quest::before {
+  content: 'Quest cards';
+}
+.clean-ui .action-panel.phase-result::before {
+  content: 'Quest result';
+}
+.clean-ui .action-panel.phase-assassinate::before {
+  content: 'Final decision';
+}
+.clean-ui .action-panel.phase-finished::before {
+  content: 'Round complete';
+}
+
+/* The old action surface was deliberately spacious on desktop, but on phones a
+   280px minimum height feels like a second dashboard under the table. Compress
+   it into a contextual action dock. */
+@media (max-width: 600px) {
+  .clean-ui .action-panel {
+    min-height: 0;
+    margin-top: 12px;
+    padding: 15px 14px 16px;
+    border-radius: 14px;
+    overflow: visible;
+  }
+
+  .clean-ui .action-panel h2 {
+    margin: 5px 0 8px;
+    font-size: 22px;
+    line-height: 1.08;
+  }
+
+  .clean-ui .action-panel .phase-icon {
+    width: 38px;
+    height: 38px;
+    margin-bottom: 4px;
+  }
+
+  .clean-ui .action-panel .phase-icon svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .clean-ui .action-panel .submission-progress {
+    margin-top: 8px;
+  }
+
+  .clean-ui .phase-team,
+  .clean-ui .phase-vote,
+  .clean-ui .phase-reveal,
+  .clean-ui .phase-assassinate {
+    position: sticky;
+    z-index: 30;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    border-color: #c7b0714f;
+    background: linear-gradient(145deg, #172b2cf5, #0d1d20f2);
+    box-shadow: 0 16px 34px #000a;
+    backdrop-filter: blur(14px);
+  }
+
+  .clean-ui .vote-actions {
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .clean-ui .phase-vote .vote-actions button {
+    min-width: 0;
+    flex: 1;
+    min-height: 52px;
+  }
+
+  .clean-ui .phase-team .gold-button,
+  .clean-ui .phase-assassinate .danger-button,
+  .clean-ui .phase-reveal .gold-button {
+    width: 100%;
+    max-width: 330px;
+  }
+
+  .clean-ui .phase-quest {
+    padding-block: 11px;
+  }
+
+  .clean-ui .phase-quest::after {
+    margin-top: 2px;
+  }
+}
+
+/* ----- Result readability and physicality ----- */
+
+/* The API intentionally returns only fail count, not submitter order. Visually
+   mix the anonymous cards as well so a deterministic “all fails first” layout
+   cannot look like it carries meaning. */
+.clean-ui .result-cards > :nth-child(1) {
+  order: 3;
+  transform: rotate(-4deg) translateY(3px);
+}
+.clean-ui .result-cards > :nth-child(2) {
+  order: 1;
+  transform: rotate(3deg) translateY(-1px);
+}
+.clean-ui .result-cards > :nth-child(3) {
+  order: 5;
+  transform: rotate(-2deg) translateY(2px);
+}
+.clean-ui .result-cards > :nth-child(4) {
+  order: 2;
+  transform: rotate(4deg) translateY(4px);
+}
+.clean-ui .result-cards > :nth-child(5) {
+  order: 4;
+  transform: rotate(-3deg) translateY(0);
+}
+
+.clean-ui .result-cards > div {
+  box-shadow:
+    0 3px 0 #0b1512,
+    0 10px 18px #0006;
+  animation: result-card-deal 260ms ease-out both;
+}
+
+.clean-ui .result-cards > :nth-child(2) {
+  animation-delay: 35ms;
+}
+.clean-ui .result-cards > :nth-child(3) {
+  animation-delay: 70ms;
+}
+.clean-ui .result-cards > :nth-child(4) {
+  animation-delay: 105ms;
+}
+.clean-ui .result-cards > :nth-child(5) {
+  animation-delay: 140ms;
+}
+
+@keyframes result-card-deal {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+    scale: 0.94;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+.clean-ui .phase-result h2.good,
+.clean-ui .phase-result h2.evil,
+.clean-ui .phase-finished h2 {
+  text-shadow: 0 2px 18px currentColor;
+}
+
+/* ----- Waiting, reconnecting, and interaction feedback ----- */
+
+.clean-ui .notice:not(.error) {
+  border-radius: 999px;
+  box-shadow: 0 8px 20px #0007;
+}
+
+.clean-ui .submission-dots i.filled {
+  box-shadow: 0 0 7px currentColor;
+}
+
+.clean-ui .sealed-icon,
+.clean-ui .table-quest-sealed {
+  filter: drop-shadow(0 3px 8px #0006);
+}
+
+/* Give phase changes a single purposeful arrival motion instead of animating
+   every control continuously. */
+.clean-ui .action-panel,
+.clean-ui .quest-stop.current {
+  animation: phase-arrive 180ms ease-out both;
+}
+
+@keyframes phase-arrive {
+  from {
+    opacity: 0.72;
+    translate: 0 5px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* Touch surfaces should never depend on hover feedback. */
+@media (hover: none) and (pointer: coarse) {
+  .clean-ui button,
+  .clean-ui a,
+  .clean-ui .table-seat,
+  .clean-ui .table-quest-card {
+    touch-action: manipulation;
+  }
+
+  .clean-ui .table-quest-card:enabled:hover,
+  .clean-ui .phase-vote .vote-actions button:hover {
+    transform: none;
+  }
+}
+
+/* Animation is seasoning, not required information. */
+@media (prefers-reduced-motion: reduce) {
+  .clean-ui *,
+  .clean-ui *::before,
+  .clean-ui *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
