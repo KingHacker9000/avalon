@@ -1,0 +1,878 @@
+/* September 2026 mobile/table UX pass.
+   This file intentionally loads after globals.css so the physical game surface,
+   avatar system, legibility and responsive fixes stay easy to iterate on. */
+
+:root,
+.dark {
+  --good: #70d7a0;
+  --evil: #ff7f79;
+  --clue: #f0cf7a;
+}
+
+/* --- Landing page: say what the game is before asking for a room code. --- */
+.clean-ui .home-stage {
+  min-height: 760px;
+  align-items: center;
+  background-position: center, center, 68% center;
+}
+
+.clean-ui .home-stage .intro {
+  width: min(520px, 100%);
+}
+
+.clean-ui .home-stage .intro > h1.sr-only {
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0 !important;
+  margin: 0 0 26px !important;
+  overflow: visible !important;
+  clip: auto !important;
+  white-space: normal !important;
+  border: 0 !important;
+  color: #f5ecd8;
+  font-size: clamp(44px, 7vw, 72px);
+  line-height: 0.98;
+  letter-spacing: -2px;
+  text-shadow: 0 4px 22px #000b;
+}
+
+.clean-ui .home-stage .intro > h1.sr-only::before {
+  content: 'LOYALTY · DECEPTION · QUESTS';
+  display: block;
+  margin-bottom: 13px;
+  color: var(--gold);
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.2em;
+}
+
+.clean-ui .home-stage .intro > h1.sr-only::after {
+  content: 'A hidden-role battle for Camelot. Build the right team, read the room, and keep Merlin alive.';
+  display: block;
+  max-width: 470px;
+  margin-top: 18px;
+  color: #c8d1c7;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: 0;
+  text-shadow: 0 2px 8px #000b;
+}
+
+.clean-ui .entry-panel {
+  max-width: 430px;
+  padding: 0 26px 26px;
+  border-color: #d4bc7b4f;
+  background: linear-gradient(145deg, #14282be8, #0c1b1edc);
+  box-shadow: 0 18px 60px #0007;
+}
+
+/* Keep character art square. Each source atlas cell is square; stretching the
+   wrapper vertically was what made faces/armor look squashed. */
+.clean-ui .portrait {
+  aspect-ratio: 1 / 1;
+}
+
+.clean-ui .portrait img {
+  object-fit: fill;
+}
+
+.clean-ui .character-grid {
+  align-items: start;
+}
+
+.clean-ui .character-card {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  background: #142628;
+}
+
+.clean-ui .character-card > .portrait {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  flex: none;
+  aspect-ratio: 1 / 1;
+}
+
+.clean-ui .character-card .card-info {
+  position: relative;
+  inset: auto;
+  min-height: 68px;
+  padding: 14px 16px;
+  background: linear-gradient(145deg, #172b2d, #101f21);
+}
+
+.clean-ui .character-card:has(.card-info > .good) .card-info h3,
+.clean-ui .setting-role:has(.good) strong,
+.clean-ui .character-list > button:has(small.good) > span,
+.clean-ui .character-detail:has(.eyebrow.good) h2,
+.clean-ui .role-strip-heading:has(.good) h2,
+.clean-ui .avalon-modal:has(.allegiance.good) [data-slot='dialog-title'] {
+  color: var(--good);
+}
+
+.clean-ui .character-card:has(.card-info > .evil) .card-info h3,
+.clean-ui .setting-role:has(.evil) strong,
+.clean-ui .character-list > button:has(small.evil) > span,
+.clean-ui .character-detail:has(.eyebrow.evil) h2,
+.clean-ui .role-strip-heading:has(.evil) h2,
+.clean-ui .avalon-modal:has(.allegiance.evil) [data-slot='dialog-title'] {
+  color: var(--evil);
+}
+
+.clean-ui .character-list small.good,
+.clean-ui .character-detail .eyebrow.good,
+.clean-ui .allegiance.good {
+  color: var(--good);
+}
+
+.clean-ui .character-list small.evil,
+.clean-ui .character-detail .eyebrow.evil,
+.clean-ui .allegiance.evil {
+  color: var(--evil);
+}
+
+.clean-ui .role-portrait-button,
+.clean-ui .role-portrait-button .portrait {
+  width: 60px;
+  height: 60px;
+  aspect-ratio: 1 / 1;
+}
+
+/* Private knowledge now lives on the relevant player at the table, not in a
+   detached row of ambiguous chips. */
+.clean-ui .role-strip .known-players {
+  display: none;
+}
+
+.clean-ui .private-knowledge-tag,
+.clean-ui .private-seat-note {
+  pointer-events: none;
+}
+
+.clean-ui .private-knowledge-tag {
+  position: absolute;
+  z-index: 8;
+  top: -18px;
+  left: 50%;
+  width: max-content;
+  max-width: 92px;
+  transform: translateX(-50%);
+  border: 1px solid #e6c87382;
+  border-radius: 999px;
+  padding: 3px 7px;
+  background: #1d251de8;
+  color: var(--clue);
+  box-shadow: 0 3px 8px #0008;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  text-shadow: 0 1px 2px #000;
+}
+
+.clean-ui .private-knowledge-tag.evil {
+  border-color: #ff8d8290;
+  background: #351e1fe8;
+  color: var(--evil);
+}
+
+.clean-ui .private-seat-note {
+  position: absolute;
+  top: 82px;
+  left: 50%;
+  width: 100px;
+  transform: translateX(-50%);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-align: center;
+  text-shadow: 0 1px 3px #000;
+}
+
+.clean-ui .role-strip.concealed + .play-layout .private-knowledge-tag,
+.clean-ui .role-strip.concealed + .play-layout .private-seat-note {
+  display: none;
+}
+
+/* --- Public avatar system: recognizable heraldic medallions instead of pawns. --- */
+.clean-ui .avatar-piece {
+  position: relative;
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  transition: transform 0.18s ease;
+}
+
+.clean-ui .table-seat:enabled:hover .avatar-piece,
+.clean-ui .table-seat:enabled:active .avatar-piece {
+  transform: translateY(-4px) scale(1.03);
+}
+
+.clean-ui .public-avatar {
+  position: relative;
+  display: grid;
+  width: 50px;
+  height: 50px;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid #ccb16d;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 24%, #647b72, #253d38 68%, #152822);
+  color: #f1dfb1;
+  box-shadow:
+    0 3px 0 #111c18,
+    0 7px 10px #0008,
+    inset 0 0 0 3px #14231e,
+    inset 0 0 0 4px #e0c57d4d;
+}
+
+.clean-ui .public-avatar .avatar-rim {
+  position: absolute;
+  inset: 5px;
+  border: 1px solid #f3d9973d;
+  border-radius: 50%;
+}
+
+.clean-ui .public-avatar > svg {
+  position: relative;
+  z-index: 1;
+  width: 25px;
+  height: 25px;
+  stroke-width: 1.55;
+  filter: drop-shadow(0 1px 2px #0008);
+}
+
+.clean-ui .public-avatar.avatar-0 {
+  background: radial-gradient(circle at 35% 24%, #91794c, #4a3820 68%, #25190e);
+  color: #ffe39a;
+}
+.clean-ui .public-avatar.avatar-1 {
+  background: radial-gradient(circle at 35% 24%, #697488, #313a4b 68%, #191f2c);
+  color: #d7e0f3;
+}
+.clean-ui .public-avatar.avatar-2 {
+  background: radial-gradient(circle at 35% 24%, #a75b45, #5a2d24 68%, #2c1714);
+  color: #ffd0a8;
+}
+.clean-ui .public-avatar.avatar-3 {
+  background: radial-gradient(circle at 35% 24%, #72629a, #3b3158 68%, #20192f);
+  color: #e3d6ff;
+}
+.clean-ui .public-avatar.avatar-4 {
+  background: radial-gradient(circle at 35% 24%, #537c75, #2b4c48 68%, #172b29);
+  color: #c9eee1;
+}
+.clean-ui .public-avatar.avatar-5 {
+  background: radial-gradient(circle at 35% 24%, #8a6b6d, #4f373e 68%, #291d23);
+  color: #ffd5dc;
+}
+.clean-ui .public-avatar.avatar-6 {
+  background: radial-gradient(circle at 35% 24%, #637b86, #314954 68%, #17272e);
+  color: #d4edf4;
+}
+.clean-ui .public-avatar.avatar-7 {
+  background: radial-gradient(circle at 35% 24%, #6b8059, #394a2f 68%, #1c2918);
+  color: #e0efc8;
+}
+
+.clean-ui .chosen .public-avatar {
+  border-color: #ffe4a4;
+  box-shadow:
+    0 0 0 4px #e9c9732e,
+    0 0 24px #f3ca623d,
+    0 3px 0 #111c18,
+    inset 0 0 0 3px #14231e;
+}
+
+.clean-ui .empty-avatar-token {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px dashed #c5b98a5c;
+  border-radius: 50%;
+  background: #10201d8a;
+  color: #b8b69b99;
+}
+
+.clean-ui .empty-avatar-token svg {
+  width: 19px;
+  height: 19px;
+}
+
+.clean-ui .empty-seat > span:last-child {
+  margin-top: 3px;
+  font-size: 9px;
+  color: #a9ad9a7d;
+}
+
+.clean-ui .pawn-name {
+  margin-top: 4px;
+  line-height: 17px;
+}
+
+.clean-ui .pawn-you {
+  top: 74px;
+}
+
+.clean-ui .leader-coin,
+.clean-ui .team-coin {
+  z-index: 4;
+}
+
+.clean-ui .leader-coin {
+  top: -5px;
+  left: -7px;
+}
+
+.clean-ui .team-coin {
+  right: -5px;
+  bottom: 0;
+}
+
+.clean-ui .avatar-picker {
+  width: min(270px, 100%);
+  padding: 9px 10px 10px;
+  border: 1px solid #d2b87345;
+  border-radius: 10px;
+  background: #0c211dd6;
+  box-shadow: 0 8px 18px #0004;
+}
+
+.clean-ui .avatar-picker-title {
+  display: block;
+  margin-bottom: 8px;
+  color: #eee4cd;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.clean-ui .avatar-options {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+
+.clean-ui .avatar-options button {
+  display: grid;
+  min-width: 0;
+  min-height: 34px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+}
+
+.clean-ui .avatar-options button .public-avatar {
+  width: 30px;
+  height: 30px;
+  border-width: 1px;
+  box-shadow:
+    0 2px 0 #111c18,
+    0 3px 5px #0005,
+    inset 0 0 0 2px #14231e;
+}
+
+.clean-ui .avatar-options button .public-avatar > svg {
+  width: 15px;
+  height: 15px;
+}
+
+.clean-ui .avatar-options button.active {
+  border-color: #f0cf7a;
+  box-shadow: 0 0 0 2px #e2bf6840;
+}
+
+.clean-ui .avatar-picker small {
+  display: block;
+  min-height: 12px;
+  margin-top: 7px;
+  color: #9eb0a5;
+  font-size: 9px;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.clean-ui .table-brand-lockup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.clean-ui .table-brand-lockup > svg {
+  width: 22px;
+  height: 22px;
+}
+
+.clean-ui .table-brand-lockup .table-brand {
+  font-size: 17px;
+}
+
+.clean-ui .table-brand-lockup .table-seat-count {
+  margin-left: 4px;
+  font-size: 11px;
+}
+
+.clean-ui .table-lobby-center {
+  gap: 12px;
+}
+
+/* Never stretch the 1024×1536 tabletop painting. Crop it like photography. */
+.clean-ui .tabletop {
+  height: auto;
+  aspect-ratio: 1.04 / 1;
+  background-size: cover;
+  background-position: center 50%;
+}
+
+.clean-ui .table-seat {
+  width: 82px;
+  height: 88px;
+}
+
+/* Quest board: remove the floating UI panel and lay individual physical pieces
+   directly on the felt. */
+.clean-ui .tabletop .quest-board {
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.clean-ui .tabletop .quest-track {
+  gap: 8px 7px;
+  overflow: visible;
+}
+
+.clean-ui .tabletop .quest-stop {
+  position: relative;
+  flex: 0 0 29%;
+  min-height: 68px;
+  justify-content: center;
+  padding: 7px 4px 6px;
+  border: 1px solid #b99c6357;
+  border-radius: 10px;
+  background:
+    linear-gradient(145deg, #30463eeb, #172b26ef),
+    radial-gradient(circle at 30% 20%, #ffffff12, transparent 45%);
+  box-shadow:
+    0 3px 0 #101b17,
+    0 7px 9px #0006,
+    inset 0 0 0 2px #d3b97913;
+}
+
+.clean-ui .tabletop .quest-stop:nth-child(1) {
+  transform: rotate(-2deg);
+}
+.clean-ui .tabletop .quest-stop:nth-child(2) {
+  transform: rotate(1.5deg);
+}
+.clean-ui .tabletop .quest-stop:nth-child(3) {
+  transform: rotate(-1deg);
+}
+.clean-ui .tabletop .quest-stop:nth-child(4) {
+  transform: rotate(1.5deg);
+}
+.clean-ui .tabletop .quest-stop:nth-child(5) {
+  transform: rotate(-1.5deg);
+}
+
+.clean-ui .tabletop .quest-stop.current {
+  border-color: #f0d28b;
+  box-shadow:
+    0 0 0 2px #e7c46a2e,
+    0 3px 0 #101b17,
+    0 8px 14px #0007;
+}
+
+.clean-ui .tabletop .quest-stop.success {
+  border-color: #79c9a284;
+  background: linear-gradient(145deg, #315f4eee, #18362def);
+}
+
+.clean-ui .tabletop .quest-stop.failed {
+  border-color: #e2837c8c;
+  background: linear-gradient(145deg, #633a37ee, #321f20ef);
+}
+
+.clean-ui .tabletop .quest-medallion {
+  width: 34px;
+  height: 34px;
+  border-width: 1px;
+  box-shadow:
+    0 2px 0 #101d18,
+    inset 0 0 0 2px #13241f,
+    inset 0 0 0 3px #baa77c45;
+}
+
+.clean-ui .tabletop .quest-stop > span {
+  color: #d1d5c3;
+  font-weight: 700;
+}
+
+.clean-ui .tabletop .rejection-track {
+  width: max-content;
+  max-width: 100%;
+  margin: 10px auto 0;
+  padding: 5px 8px;
+  border: 1px solid #9e84564d;
+  border-radius: 999px;
+  background: #142721d9;
+  box-shadow: 0 3px 7px #0005;
+}
+
+.clean-ui .tabletop .rejection-track > .icon-button {
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 5px;
+}
+
+.clean-ui .tabletop .rejection-track i {
+  width: 8px;
+  height: 8px;
+}
+
+/* Cards are real choices: preserve artwork aspect ratio and give them a hand-held
+   lift instead of flattening the atlas into each rectangle. */
+.clean-ui .phase-quest .vote-actions .success-button,
+.clean-ui .phase-quest .vote-actions .danger-button,
+.clean-ui .result-cards .success-card,
+.clean-ui .result-cards .fail-card {
+  background-size: 100% 100%, auto 100%;
+  background-repeat: no-repeat;
+}
+
+.clean-ui .phase-quest .vote-actions button,
+.clean-ui .phase-vote .vote-actions button {
+  border-radius: 10px;
+  box-shadow:
+    0 4px 0 #101815,
+    0 12px 22px #0006,
+    inset 0 0 0 3px #d5b9781f;
+}
+
+.clean-ui .phase-quest .vote-actions button:enabled:hover,
+.clean-ui .phase-vote .vote-actions button:enabled:hover {
+  transform: translateY(-7px) rotate(1deg);
+  box-shadow:
+    0 5px 0 #101815,
+    0 18px 28px #0007,
+    inset 0 0 0 3px #e6c8832c;
+}
+
+.clean-ui .phase-team .gold-button {
+  border-radius: 8px !important;
+  box-shadow: 0 7px 18px #0005;
+}
+
+/* Mobile: larger tappable identities, fewer mystery boxes, and primary action
+   stays reachable after choosing players. */
+@media (max-width: 800px) {
+  .clean-ui nav button:nth-child(2) {
+    display: inline-flex;
+  }
+
+  .clean-ui .home-stage {
+    min-height: 820px;
+    padding-top: 54px;
+    padding-bottom: 52px;
+    background-position: center, center, 72% center;
+  }
+
+  .clean-ui .home-stage .intro > h1.sr-only {
+    max-width: 520px;
+  }
+
+  .clean-ui .entry-panel {
+    max-width: 100%;
+  }
+
+  .clean-ui .character-grid {
+    grid-auto-columns: minmax(205px, 72vw);
+  }
+
+  .clean-ui .character-card {
+    height: auto;
+    min-height: 0;
+  }
+
+  .clean-ui .tabletop {
+    aspect-ratio: 1 / 1.02;
+  }
+
+  .clean-ui .table-seat {
+    width: 72px;
+    height: 82px;
+  }
+
+  .clean-ui .public-avatar {
+    width: 46px;
+    height: 46px;
+  }
+
+  .clean-ui .avatar-piece {
+    width: 50px;
+    height: 50px;
+  }
+
+  .clean-ui .pawn-name {
+    font-size: 11px;
+  }
+
+  .clean-ui .private-knowledge-tag {
+    top: -15px;
+    max-width: 80px;
+    padding: 2px 6px;
+    font-size: 8px;
+  }
+
+  .clean-ui .private-seat-note {
+    top: 76px;
+    font-size: 9px;
+  }
+
+  .clean-ui .pawn-you {
+    top: 66px;
+  }
+}
+
+@media (max-width: 600px) {
+  .clean-ui header {
+    height: 68px;
+    padding-inline: 14px;
+  }
+
+  .clean-ui .brand {
+    font-size: 21px;
+    letter-spacing: 3px;
+  }
+
+  .clean-ui nav {
+    gap: 2px;
+  }
+
+  .clean-ui .icon-button {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    padding: 8px;
+  }
+
+  .clean-ui .home-stage {
+    min-height: 760px;
+    padding: 38px 18px 44px;
+    background-image:
+      linear-gradient(0deg, #0b1719 0%, #0b1719bd 24%, #0b17193d 68%),
+      linear-gradient(90deg, #0b1719dd 0%, #0b171982 62%, #0b17192b 100%),
+      url('/art/camelot.png');
+    background-position: center, center, 69% center;
+    background-size: cover;
+  }
+
+  .clean-ui .home-stage .intro > h1.sr-only {
+    margin-bottom: 22px !important;
+    font-size: clamp(42px, 14vw, 60px);
+  }
+
+  .clean-ui .home-stage .intro > h1.sr-only::after {
+    max-width: 360px;
+    font-size: 15px;
+  }
+
+  .clean-ui .entry-panel {
+    padding-inline: 20px;
+  }
+
+  .clean-ui .game-shell {
+    padding-inline: 10px;
+  }
+
+  .clean-ui .tabletop {
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 1 / 1.06;
+    border-radius: 18px;
+    background-size: cover;
+  }
+
+  .clean-ui .tabletop-center {
+    inset: 24% 22%;
+  }
+
+  .clean-ui .table-seat {
+    width: 62px;
+    height: 76px;
+  }
+
+  .clean-ui .public-avatar {
+    width: 42px;
+    height: 42px;
+  }
+
+  .clean-ui .public-avatar > svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .clean-ui .avatar-piece {
+    width: 46px;
+    height: 46px;
+  }
+
+  .clean-ui .pawn-name {
+    margin-top: 2px;
+    font-size: 10px;
+    line-height: 15px;
+  }
+
+  .clean-ui .pawn-you {
+    top: 61px;
+    font-size: 8px;
+  }
+
+  .clean-ui .private-seat-note {
+    top: 69px;
+    width: 78px;
+    font-size: 8px;
+  }
+
+  .clean-ui .private-knowledge-tag {
+    top: -13px;
+    max-width: 70px;
+    padding: 2px 5px;
+    font-size: 7.5px;
+  }
+
+  .clean-ui .table-brand-lockup .table-brand {
+    display: none;
+  }
+
+  .clean-ui .table-brand-lockup > svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .clean-ui .avatar-picker {
+    width: min(235px, 100%);
+    padding: 8px;
+  }
+
+  .clean-ui .avatar-options {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+  }
+
+  .clean-ui .avatar-options button .public-avatar {
+    width: 31px;
+    height: 31px;
+  }
+
+  .clean-ui .avatar-picker-title {
+    font-size: 10px;
+  }
+
+  .clean-ui .avatar-picker small {
+    font-size: 8px;
+  }
+
+  .clean-ui .tabletop .quest-stop {
+    min-height: 58px;
+    padding: 5px 3px;
+  }
+
+  .clean-ui .tabletop .quest-medallion {
+    width: 29px;
+    height: 29px;
+  }
+
+  .clean-ui .tabletop .quest-medallion svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .clean-ui .tabletop .quest-stop > span {
+    font-size: 9px;
+  }
+
+  .clean-ui .tabletop .quest-stop small {
+    font-size: 8px;
+  }
+
+  .clean-ui .tabletop .rejection-track {
+    margin-top: 7px;
+    padding: 3px 6px;
+  }
+
+  .clean-ui .tabletop .rejection-track > span {
+    font-size: 8px;
+  }
+
+  .clean-ui .tabletop .rejection-track > .icon-button {
+    width: 26px;
+    min-width: 26px;
+    height: 26px;
+    min-height: 26px;
+  }
+
+  .clean-ui .phase-team .gold-button {
+    position: sticky;
+    z-index: 20;
+    bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
+  .clean-ui .vote-actions {
+    gap: 14px;
+  }
+
+  .clean-ui .phase-quest .vote-actions .success-button,
+  .clean-ui .phase-quest .vote-actions .danger-button {
+    width: 108px;
+    height: 144px;
+    min-height: 144px;
+  }
+}
+
+@media (max-width: 390px) {
+  .clean-ui .table-seat {
+    width: 56px;
+  }
+
+  .clean-ui .public-avatar {
+    width: 38px;
+    height: 38px;
+  }
+
+  .clean-ui .avatar-piece {
+    width: 42px;
+    height: 42px;
+  }
+
+  .clean-ui .pawn-name {
+    max-width: 58px;
+    font-size: 9px;
+  }
+
+  .clean-ui .private-seat-note {
+    top: 64px;
+  }
+
+  .clean-ui .pawn-you {
+    top: 57px;
+  }
+}
