@@ -6,6 +6,7 @@ import './ux-overhaul.css';
 import './gameplay-ux.css';
 import './pwa.css';
 import './mobile-fluidity.css';
+import './mobile-polish.css';
 
 export const metadata: Metadata = {
   title: 'Avalon — The Round Table',
