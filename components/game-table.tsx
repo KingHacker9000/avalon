@@ -84,7 +84,9 @@ export function GameTable({
   children?: ReactNode;
 }) {
   const lobby = room.phase === 'lobby';
-  const seats = lobby ? room.capacity : room.players.length;
+  const seats = lobby
+    ? Math.min(10, Math.max(5, room.players.length + (room.players.length < 10 ? 1 : 0)))
+    : room.players.length;
   const dense = seats >= 9;
   const me = room.players.find((p) => p.id === room.me.id);
   const privateInfoAvailable = room.phase !== 'reveal' || Boolean(me?.ready);
@@ -193,10 +195,10 @@ export function GameTable({
                 <span className="table-brand">AVALON</span>
                 <span
                   className="table-seat-count"
-                  aria-label={`${room.players.length} of ${room.capacity} seats filled`}
+                  aria-label={`${room.players.length} players joined, up to 10`}
                 >
                   <Users />
-                  {room.players.length}/{room.capacity}
+                  {room.players.length}
                 </span>
               </div>
               {me && (

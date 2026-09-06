@@ -102,13 +102,30 @@ void test('non-hosts cannot configure, start, remove, rematch, or restart a roun
     );
 });
 
-void test('room names, capacity and midgame joins are validated', () => {
+void test('rooms auto-grow to ten players and reject midgame joins', () => {
   assert.throws(() => makePlayer('', 'x'));
   assert.throws(() => makePlayer('a'.repeat(21), 'x'));
   const r = fixture();
-  assert.throws(() => joinRoom(r, makePlayer('Sixth', 'x')), /full/);
+  for (let n = 6; n <= 10; n++)
+    joinRoom(r, makePlayer(`Player ${n}`, `secret${n}`));
+  assert.equal(r.players.length, 10);
+  assert.throws(() => joinRoom(r, makePlayer('Eleventh', 'x')), /full/);
   start(r);
   assert.throws(() => joinRoom(r, makePlayer('Late', 'x')), /already started/);
+});
+
+void test('optional roles adapt to the number of players actually in the lobby', () => {
+  const r = fixture(5);
+  act(r, r.host, 'configure', {
+    optional: ['Morgana', 'Mordred', 'Oberon'],
+  });
+  assert.deepEqual(r.optional, ['Morgana']);
+  r.players.push(makePlayer('Player 6', 'secret6'));
+  r.players.push(makePlayer('Player 7', 'secret7'));
+  act(r, r.host, 'configure', {
+    optional: ['Morgana', 'Mordred', 'Oberon'],
+  });
+  assert.deepEqual(r.optional, ['Morgana', 'Mordred']);
 });
 
 void test('start requires five players and all players ready', () => {

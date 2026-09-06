@@ -88,7 +88,7 @@ export function createRoom(
     players: [player],
     phase: 'lobby',
     optional: ['Percival', 'Morgana'],
-    capacity: 5,
+    capacity: practice ? 5 : 10,
     practice,
     leader: 0,
     round: 0,
@@ -135,7 +135,7 @@ export function makePlayer(
 export function joinRoom(room: Room, player: Player) {
   ensure(room.phase === 'lobby', 'This game has already started.');
   ensure(!room.practice, 'Practice tables are solo.');
-  ensure(room.players.length < room.capacity, 'This table is full.');
+  ensure(room.players.length < 10, 'This table is full (10 players maximum).');
   ensure(
     !room.players.some(
       (p) => p.name.toLowerCase() === player.name.toLowerCase(),
@@ -175,6 +175,27 @@ function resetRound(room: Room, message: string) {
     p.ready = p.bot;
   });
   room.log = [message];
+}
+
+function normalizeOptionalForCount(count: number, optional: Role[]): Role[] {
+  const safeCount = Math.min(10, Math.max(5, count));
+  ensure(
+    optional.every((r) => (OPTIONAL as readonly string[]).includes(r)) &&
+      new Set(optional).size === optional.length,
+    'Invalid character selection.',
+  );
+  let goodSlots = safeCount - EVIL_COUNT[safeCount] - 1;
+  let evilSlots = EVIL_COUNT[safeCount] - 1;
+  return optional.filter((role) => {
+    if (ROLES[role].side === 'good') {
+      if (goodSlots <= 0) return false;
+      goodSlots--;
+      return true;
+    }
+    if (evilSlots <= 0) return false;
+    evilSlots--;
+    return true;
+  });
 }
 
 export function deckFor(count: number, optional: Role[]): Role[] {
@@ -281,18 +302,12 @@ export function act(
     case 'configure': {
       host();
       ensure(room.phase === 'lobby', 'Settings are locked during play.');
-      const count = Number(data.capacity);
-      ensure(
-        Number.isInteger(count) &&
-          count >= 5 &&
-          count <= 10 &&
-          count >= room.players.length,
-        'Choose a table size from 5 to 10 with room for everyone.',
-      );
       ensure(Array.isArray(data.optional), 'Choose the optional characters.');
-      deckFor(count, data.optional as Role[]);
-      room.capacity = count;
-      room.optional = data.optional as Role[];
+      room.capacity = room.practice ? 5 : 10;
+      room.optional = normalizeOptionalForCount(
+        room.players.length,
+        data.optional as Role[],
+      );
       room.players.forEach((p) => (p.ready = p.bot));
       break;
     }
@@ -312,6 +327,11 @@ export function act(
         room.players.every((p) => p.ready),
         'Wait for everyone to be ready.',
       );
+      room.optional = normalizeOptionalForCount(
+        room.players.length,
+        room.optional,
+      );
+      room.capacity = room.practice ? 5 : 10;
       const deck = shuffle(deckFor(room.players.length, room.optional));
       room.players.forEach((p, i) => {
         p.role = deck[i];
@@ -411,6 +431,8 @@ export function act(
         'That player is not at this table.',
       );
       room.players = room.players.filter((player) => player.id !== data.target);
+      room.optional = normalizeOptionalForCount(room.players.length, room.optional);
+      room.capacity = room.practice ? 5 : 10;
       if (room.leader >= room.players.length) room.leader = 0;
       break;
     }
@@ -420,6 +442,8 @@ export function act(
         'An active seat is reserved so you can reconnect.',
       );
       room.players = room.players.filter((player) => player.id !== id);
+      room.optional = normalizeOptionalForCount(room.players.length, room.optional);
+      room.capacity = room.practice ? 5 : 10;
       if (room.host === id)
         room.host =
           room.players.find((player) => !player.bot)?.id ?? room.players[0]?.id ?? '';
@@ -598,7 +622,7 @@ export function publicView(room: Room, id: string) {
     host: room.host,
     phase: room.phase,
     optional: room.optional,
-    capacity: room.capacity,
+    capacity: room.practice ? 5 : 10,
     practice: room.practice,
     leader: room.players[room.leader]?.id,
     round: room.round,
@@ -612,7 +636,7 @@ export function publicView(room: Room, id: string) {
     phaseEndsAt: room.phaseEndsAt,
     revision: room.revision,
     recovery: { canRestartRound },
-    teamSizes: TEAM_SIZES[room.players.length] ?? TEAM_SIZES[room.capacity],
+    teamSizes: TEAM_SIZES[room.players.length] ?? TEAM_SIZES[5],
     players: room.players.map((p) => ({
       id: p.id,
       name: p.name,
