@@ -10,7 +10,7 @@ Group=ashish
 WorkingDirectory=/srv/avalon/current
 Environment=NODE_ENV=production
 Environment=AVALON_DATA_DIR=/var/lib/avalon
-ExecStart=/usr/bin/npm exec -- vinext start -H 100.113.112.87 -p 4173
+ExecStart=/srv/avalon/current/node_modules/.bin/vinext start -H 100.113.112.87 -p 4173
 Restart=always
 RestartSec=3
 TimeoutStopSec=20
