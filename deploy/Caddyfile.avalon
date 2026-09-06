@@ -1,7 +1,9 @@
 avalon.ashishajin.com {
   encode zstd gzip
 
-  reverse_proxy 127.0.0.1:4173
+  # Avalon runs on the Raspberry Pi. The Pi port is private to the tailnet;
+  # Lightsail remains the only public HTTP/HTTPS edge.
+  reverse_proxy 100.113.112.87:4173
 
   header {
     X-Content-Type-Options "nosniff"

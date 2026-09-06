@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+PI_HOST="100.113.112.87"
+PI_PORT="2222"
+PI_USER="ashish"
+PI_KEY="/home/ubuntu/.ssh/avalon_pi_deploy"
+PI_KNOWN_HOSTS="/home/ubuntu/.ssh/avalon_pi_known_hosts"
+
+original="${SSH_ORIGINAL_COMMAND:-}"
+if [[ ! "$original" =~ ^deploy[[:space:]]+([0-9a-f]{40})$ ]]; then
+  echo "Avalon deploy relay accepts only: deploy <40-char commit sha>" >&2
+  exit 64
+fi
+REVISION="${BASH_REMATCH[1]}"
+
+exec /usr/bin/ssh \
+  -p "$PI_PORT" \
+  -i "$PI_KEY" \
+  -o BatchMode=yes \
+  -o IdentitiesOnly=yes \
+  -o ClearAllForwardings=yes \
+  -o RequestTTY=no \
+  -o StrictHostKeyChecking=yes \
+  -o UserKnownHostsFile="$PI_KNOWN_HOSTS" \
+  -o ConnectTimeout=10 \
+  "$PI_USER@$PI_HOST" \
+  "deploy $REVISION"
