@@ -90,6 +90,74 @@
   .clean-ui .character-detail > div:last-child {
     padding: 16px;
   }
+
+  /* Real-device vote fix: older card-like button rules were still winning on
+     phones, leaving giant circular icons hanging outside 108px-tall controls.
+     Keep the vote as a compact two-choice dock with each icon inside its tap
+     target and enough bottom padding for gesture/navigation bars. */
+  .clean-ui .action-panel.phase-vote {
+    padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  .clean-ui .action-panel.phase-vote::before,
+  .clean-ui .action-panel.phase-vote > h2 {
+    text-align: center;
+  }
+
+  .clean-ui .action-panel.phase-vote > h2 {
+    margin: 5px 0 9px;
+    font-size: 22px;
+    line-height: 1.08;
+  }
+
+  .clean-ui .phase-vote .vote-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 10px !important;
+    margin: 8px 0 0 !important;
+    align-items: stretch;
+  }
+
+  .clean-ui .phase-vote .vote-actions .success-button,
+  .clean-ui .phase-vote .vote-actions .danger-button {
+    width: 100% !important;
+    max-width: none !important;
+    height: 62px !important;
+    min-height: 62px !important;
+    flex: none !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    padding: 0 12px !important;
+    border-radius: 12px !important;
+    font-size: 16px !important;
+    line-height: 1 !important;
+    transform: none !important;
+  }
+
+  .clean-ui .phase-vote .vote-actions button svg {
+    position: static !important;
+    width: 23px !important;
+    height: 23px !important;
+    min-width: 23px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+    flex: none !important;
+  }
+
+  .clean-ui .phase-vote .submission-progress {
+    margin-top: 9px;
+  }
 }
 
 @media (max-width: 450px) {
@@ -101,5 +169,19 @@
     grid-row: auto;
     grid-column: auto;
     margin: 3px 0;
+  }
+
+  .clean-ui .phase-vote .vote-actions .success-button,
+  .clean-ui .phase-vote .vote-actions .danger-button {
+    height: 58px !important;
+    min-height: 58px !important;
+    padding-inline: 10px !important;
+    font-size: 15px !important;
+  }
+
+  .clean-ui .phase-vote .vote-actions button svg {
+    width: 21px !important;
+    height: 21px !important;
+    min-width: 21px !important;
   }
 }
