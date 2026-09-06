@@ -25,4 +25,4 @@ The portrait sheet uses equal cells with no gutters. Reading left to right:
 7. Oberon — wild fae, antler crown.
 8. Minion of Mordred — scarred, armored warrior.
 
-The frontend displays each cell using CSS background positioning. Public player avatars use neutral Lucide symbols and have no relationship to secret roles. Lucide icons use the library's ISC license. UI ornaments and the crown favicon are simple vector geometry.
+The frontend displays each cell by clipping and positioning the shared image with CSS. Public player avatars use neutral Lucide symbols and have no relationship to secret roles. Lucide icons use the library's ISC license. UI ornaments and the crown favicon are simple vector geometry.
