@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './ux-overhaul.css';
 export const metadata: Metadata = {
   title: 'Avalon — The Round Table',
   description:
