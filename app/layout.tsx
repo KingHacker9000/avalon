@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { PwaInstall } from '@/components/pwa-install';
 import './globals.css';
 import './ux-overhaul.css';
+import './gameplay-ux.css';
 import './pwa.css';
 
 export const metadata: Metadata = {
