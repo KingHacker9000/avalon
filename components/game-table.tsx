@@ -77,6 +77,19 @@ export function GameTable({
     if (me) setAvatarChoice(me.avatar);
   }, [me?.avatar]);
 
+  // The old action copy called the selectable pieces "pawns". The pieces are now
+  // public avatars; keep legacy page copy in sync without coupling the table to
+  // the parent page's local selection state.
+  useEffect(() => {
+    document.querySelectorAll('.phase-team h2, .target-name').forEach((node) => {
+      if (node.textContent?.includes('pawn')) {
+        node.textContent = node.textContent
+          .replace(/pawns/g, 'players')
+          .replace(/pawn/g, 'player');
+      }
+    });
+  }, [room.phase, room.round, room.revision]);
+
   async function chooseAvatar(avatar: number) {
     if (!lobby || avatar === avatarChoice || avatarState === 'saving') return;
     const previous = avatarChoice;
