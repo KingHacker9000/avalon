@@ -8,6 +8,7 @@ import './pwa.css';
 import './mobile-fluidity.css';
 import './mobile-polish.css';
 import './final-polish.css';
+import './mobile-lobby-fix.css';
 
 export const metadata: Metadata = {
   title: 'Avalon — The Round Table',

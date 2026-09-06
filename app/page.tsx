@@ -128,6 +128,7 @@ export default function Home() {
   const sessionRef = useRef<Session | null>(null);
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
   const [tab, setTab] = useState<'host' | 'join'>('host');
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false);
@@ -177,14 +178,17 @@ export default function Home() {
         const savedName = localStorage.getItem('avalon.name');
         if (savedName) setName(savedName);
         const invite = new URLSearchParams(location.search).get('room');
-        if (invite) {
-          setCode(invite.toUpperCase().slice(0, 6));
+        const normalizedInvite =
+          invite?.toUpperCase().replace(/[^A-Z2-9]/g, '').slice(0, 6) ?? '';
+        if (normalizedInvite.length === 6) {
+          setInviteCode(normalizedInvite);
+          setCode(normalizedInvite);
           setTab('join');
         }
         const raw = sessionStorage.getItem('avalon.session');
         if (raw) {
           const saved = JSON.parse(raw) as Session;
-          if (!invite || invite.toUpperCase() === saved.code) {
+          if (!normalizedInvite || normalizedInvite === saved.code) {
             saveSession(saved);
             request('poll', {}, saved)
               .then((r) => {
@@ -358,6 +362,20 @@ export default function Home() {
   const required = room?.teamSizes[room.round] ?? 2;
   const playerName = (id: string) =>
     room?.players.find((p) => p.id === id)?.name ?? 'Player';
+  const lobbyPlayerCount = room?.players.length ?? 0;
+  const roleRuleCount = Math.min(10, Math.max(5, lobbyPlayerCount || 5));
+  const optionalRoleDisabled = (role: Role) => {
+    if (!room || room.optional.includes(role)) return false;
+    const side = ROLES[role].side;
+    const selectedOnSide = room.optional.filter(
+      (selectedRole) => ROLES[selectedRole].side === side,
+    ).length;
+    const sideSlots =
+      side === 'evil'
+        ? EVIL_COUNT[roleRuleCount] - 1
+        : roleRuleCount - EVIL_COUNT[roleRuleCount] - 1;
+    return selectedOnSide >= sideSlots;
+  };
   function togglePlayer(id: string) {
     setSelected((s) =>
       s.includes(id)
@@ -436,7 +454,7 @@ export default function Home() {
             <div className="intro">
               <h1 className="sr-only">Play Avalon</h1>
               <form className="entry-panel" onSubmit={submitEntry}>
-                <div className="entry-tabs" aria-label="Host or join">
+                <div className={`entry-tabs ${inviteCode ? 'invite-hidden' : ''}`} aria-label="Host or join">
                   <button
                     type="button"
                     aria-pressed={tab === 'host'}
@@ -462,6 +480,16 @@ export default function Home() {
                     Join
                   </button>
                 </div>
+                {inviteCode && (
+                  <div
+                    className="invite-room-summary"
+                    aria-label={`Invited to room ${inviteCode}`}
+                  >
+                    <span>Invited to room</span>
+                    <strong>{inviteCode}</strong>
+                    <small>Enter your name and you’re in.</small>
+                  </div>
+                )}
                 <label htmlFor="name">Your name</label>
                 <input
                   autoComplete="off"
@@ -472,7 +500,7 @@ export default function Home() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
-                {tab === 'join' && (
+                {tab === 'join' && !inviteCode && (
                   <div className="code-field">
                     <label htmlFor="code">Room code</label>
                     <input
@@ -580,6 +608,7 @@ export default function Home() {
               aria-label={`Copy room invitation ${room.code}`}
               title="Copy invitation"
             >
+              <span>{copied ? 'Invite copied' : 'Copy invite'}</span>
               <strong>{room.code}</strong>
               {copied ? <Check /> : <Copy />}
             </button>
@@ -653,28 +682,17 @@ export default function Home() {
                             ))}
                         </details>
                       )}
-                    <label htmlFor="capacity">Players</label>
-                    <select
-                      id="capacity"
-                      disabled={!host || busy || room.practice}
-                      value={room.capacity}
-                      onChange={(e) =>
-                        void send('configure', {
-                          capacity: Number(e.target.value),
-                          optional: room.optional,
-                        })
-                      }
-                    >
-                      {[5, 6, 7, 8, 9, 10].map((n) => (
-                        <option
-                          key={n}
-                          value={n}
-                          disabled={n < room.players.length}
-                        >
-                          {n} · {n - EVIL_COUNT[n]} good / {EVIL_COUNT[n]} evil
-                        </option>
-                      ))}
-                    </select>
+                    <div className="player-count-summary" aria-live="polite">
+                      <Users />
+                      <div>
+                        <strong>{room.players.length} joined</strong>
+                        <span>
+                          {room.players.length >= 5
+                            ? `${room.players.length - EVIL_COUNT[room.players.length]} good / ${EVIL_COUNT[room.players.length]} evil · starts with whoever is here`
+                            : `${5 - room.players.length} more needed · room expands automatically up to 10`}
+                        </span>
+                      </div>
+                    </div>
                     <div className="settings-divider" />
                     {OPTIONAL.map((role) => (
                       <label
@@ -695,10 +713,11 @@ export default function Home() {
                         <input
                           type="checkbox"
                           checked={room.optional.includes(role)}
-                          disabled={!host || busy}
+                          disabled={
+                            !host || busy || optionalRoleDisabled(role)
+                          }
                           onChange={(e) =>
                             void send('configure', {
-                              capacity: room.capacity,
                               optional: e.target.checked
                                 ? [...room.optional, role]
                                 : room.optional.filter((r) => r !== role),
