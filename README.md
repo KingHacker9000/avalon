@@ -20,7 +20,7 @@ Open **http://localhost:4173**. Create a room, share its six-character code, and
 
 For other devices on your home network, use **http://YOUR-PC-LAN-IP:4173**. Run `ipconfig` on Windows to find the active network adapter's IPv4 address. Allow Node through the Windows firewall on your private network if prompted. Open the game using that LAN address before copying an invitation, so the link works for your friends. A `localhost` link only works on the hosting computer.
 
-Players outside your network need this Node application hosted on an HTTPS server or a secure tunnel. This checkout has not been published. Use the production server, not the development server, for shared play. Behind a reverse proxy, preserve the original Host header so the same-origin checks work. Use one persistent server instance and persistent storage.
+Players outside your network can use the production deployment at **https://avalon.ashishajin.com**. Behind a reverse proxy, preserve the original Host header so the same-origin checks work. Use one persistent server instance and persistent storage.
 
 ## What is included
 
