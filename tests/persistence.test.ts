@@ -25,11 +25,28 @@ void test('rooms survive a full process restart, tokens remain valid, fake token
     const created = run(
       `import {execute} from ${JSON.stringify(moduleUrl)}; console.log(JSON.stringify(execute({action:'create',name:'Persistent Host'},'')));`,
     );
+    const avatarChanged = run(
+      `import {execute} from ${JSON.stringify(moduleUrl)}; console.log(JSON.stringify(execute({action:'avatar',code:${JSON.stringify(created.room.code)},avatar:6},${JSON.stringify(created.token)})));`,
+    );
+    assert.equal(
+      avatarChanged.room.players.find((p: { id: string }) => p.id === created.room.me.id)
+        .avatar,
+      6,
+    );
     const resumed = run(
       `import {execute} from ${JSON.stringify(moduleUrl)}; console.log(JSON.stringify(execute({action:'poll',code:${JSON.stringify(created.room.code)}},${JSON.stringify(created.token)})));`,
     );
     assert.equal(resumed.room.me.id, created.room.me.id);
     assert.equal(resumed.room.code, created.room.code);
+    assert.equal(
+      resumed.room.players.find((p: { id: string }) => p.id === created.room.me.id)
+        .avatar,
+      6,
+    );
+    const invalidAvatar = run(
+      `import {execute} from ${JSON.stringify(moduleUrl)}; try{execute({action:'avatar',code:${JSON.stringify(created.room.code)},avatar:99},${JSON.stringify(created.token)});console.log('false')}catch{console.log('true')}`,
+    );
+    assert.equal(invalidAvatar, true);
     const rejected = run(
       `import {execute} from ${JSON.stringify(moduleUrl)}; try{execute({action:'poll',code:${JSON.stringify(created.room.code)}},'a'.repeat(64));console.log('false')}catch{console.log('true')}`,
     );
