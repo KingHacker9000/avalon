@@ -37,6 +37,39 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: API smoke
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          data_dir="$(mktemp -d)"
+          log_file="$RUNNER_TEMP/avalon-api-smoke.log"
+          AVALON_DATA_DIR="$data_dir" npm start >"$log_file" 2>&1 &
+          server_pid=$!
+          cleanup() {
+            kill "$server_pid" 2>/dev/null || true
+            wait "$server_pid" 2>/dev/null || true
+            rm -rf "$data_dir"
+          }
+          trap cleanup EXIT
+
+          ready=false
+          for _ in $(seq 1 80); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null 2>&1; then
+              ready=true
+              break
+            fi
+            sleep 0.25
+          done
+          if [ "$ready" != true ]; then
+            cat "$log_file"
+            exit 1
+          fi
+
+          if ! AVALON_TEST_URL=http://127.0.0.1:4173 node tests/api-smoke.mjs; then
+            cat "$log_file"
+            exit 1
+          fi
+
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.AVALON_AUTODEPLOY == 'true'
     needs: validate
