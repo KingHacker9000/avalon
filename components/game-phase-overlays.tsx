@@ -23,7 +23,6 @@ export function PhaseCountdown({
   const [seconds, setSeconds] = useState(() => secondsRemaining(endsAt));
 
   useEffect(() => {
-    setSeconds(secondsRemaining(endsAt));
     if (!endsAt) return;
     const timer = window.setInterval(
       () => setSeconds(secondsRemaining(endsAt)),
@@ -80,7 +79,11 @@ export function VoteReveal({ room }: { room: RoomView }) {
           );
         })}
       </div>
-      <PhaseCountdown endsAt={room.phaseEndsAt} prefix={nextLabel} />
+      <PhaseCountdown
+        key={room.phaseEndsAt ?? 'vote-result'}
+        endsAt={room.phaseEndsAt}
+        prefix={nextLabel}
+      />
     </section>
   );
 }
