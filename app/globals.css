@@ -2438,3 +2438,1325 @@ select {
   color: #c4c9bc;
   margin: 14px 0 9px;
 }
+/* Mobile-first decluttering: artwork stays; the current action takes priority. */
+.clean-ui header {
+  height: 76px;
+  padding-inline: 6%;
+}
+.clean-ui nav {
+  gap: 8px;
+}
+.clean-ui .icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 10px;
+  border-radius: 50%;
+  color: var(--dim);
+}
+.clean-ui .icon-button:hover {
+  color: var(--gold);
+  background: #d9b8770c;
+}
+.clean-ui .icon-button svg {
+  width: 19px;
+  height: 19px;
+  stroke-width: 1.6;
+}
+.clean-ui .icon-button:focus-visible,
+.clean-ui summary:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+.clean-ui .home-stage {
+  min-height: 660px;
+  padding-block: 72px;
+}
+.clean-ui .intro {
+  width: 380px;
+}
+.clean-ui .entry-panel {
+  padding: 0 26px 26px;
+}
+.clean-ui .entry-tabs {
+  gap: 30px;
+  margin-bottom: 28px;
+}
+.clean-ui .entry-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  padding-block: 21px 17px;
+}
+.clean-ui .entry-tabs svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.5;
+}
+.clean-ui label {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.clean-ui input:not([type='checkbox']) {
+  font-size: 16px;
+  min-height: 48px;
+}
+.clean-ui .entry-panel .gold-button {
+  margin-top: 26px;
+}
+.clean-ui .gold-button,
+.clean-ui .outline-button,
+.clean-ui .success-button,
+.clean-ui .danger-button {
+  min-height: 48px;
+  font-size: 15px !important;
+}
+.clean-ui .entry-extras {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 4px 0;
+  color: var(--dim);
+  font-size: 14px;
+}
+.clean-ui .entry-extras span,
+.clean-ui .entry-extras button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.clean-ui .entry-extras button {
+  color: var(--gold);
+}
+.clean-ui .entry-extras svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.5;
+}
+.clean-ui .resume-link {
+  min-height: 44px;
+  margin: 8px 0 0;
+}
+.clean-ui .character-section {
+  padding-block: 36px 60px;
+}
+.clean-ui .section-title {
+  align-items: center;
+  margin-bottom: 24px;
+}
+.clean-ui .section-title h2 {
+  font-size: 27px;
+  margin: 0;
+}
+.clean-ui .card-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 60px;
+}
+.clean-ui .card-info h3 {
+  font-size: 25px;
+  margin: 0;
+}
+.clean-ui .card-info svg {
+  width: 18px;
+  height: 18px;
+  stroke-width: 1.6;
+}
+.clean-ui .game-shell {
+  max-width: 1120px;
+  margin: auto;
+  padding: 30px 5.3% 64px;
+}
+.clean-ui .table-bar {
+  margin-bottom: 26px;
+  align-items: center;
+}
+.clean-ui .table-bar h1 {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 0;
+  font-size: 30px;
+}
+.clean-ui .practice-icon {
+  width: 19px;
+  height: 19px;
+  color: var(--dim);
+}
+.clean-ui .room-code {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  min-height: 44px;
+}
+.clean-ui .room-code strong {
+  font-size: 20px;
+  letter-spacing: 3px;
+}
+.clean-ui .room-code svg {
+  width: 16px;
+  height: 16px;
+}
+.clean-ui .lobby-layout {
+  grid-template-columns: minmax(0, 1fr) 280px;
+  align-items: start;
+}
+.clean-ui .lobby-main {
+  padding: 26px;
+}
+.clean-ui .panel-heading {
+  align-items: center;
+}
+.clean-ui .panel-heading h2 {
+  font-size: 24px;
+}
+.clean-ui .seats {
+  margin: 24px 0 28px;
+  gap: 12px;
+}
+.clean-ui .seat {
+  min-height: 68px;
+  padding: 12px;
+  gap: 12px;
+}
+.clean-ui .seat strong {
+  font-size: 16px;
+}
+.clean-ui .seat strong small {
+  font-size: 12px;
+}
+.clean-ui .seat-symbols {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--gold);
+}
+.clean-ui .seat-symbols svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.6;
+}
+.clean-ui .ready-status {
+  min-width: 18px;
+  max-width: none;
+}
+.clean-ui .ready-status svg {
+  width: 20px;
+  height: 20px;
+}
+.clean-ui .unready-dot {
+  width: 8px;
+  height: 8px;
+  border: 1px solid #6d847a;
+  border-radius: 50%;
+}
+.clean-ui .remove-player {
+  margin-right: -8px;
+}
+.clean-ui .muted-footnote {
+  display: block;
+  font-size: 13px;
+  margin-top: 20px;
+}
+.clean-ui details.settings,
+.clean-ui details.chronicle {
+  padding: 0;
+  overflow: hidden;
+}
+.clean-ui summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 18px 20px;
+  min-height: 58px;
+  font-size: 14px;
+  color: #c4c9bc;
+  list-style: none;
+}
+.clean-ui summary::-webkit-details-marker {
+  display: none;
+}
+.clean-ui summary svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.5;
+}
+.clean-ui summary svg:last-child {
+  margin-left: auto;
+  transition: transform 0.2s;
+}
+.clean-ui details[open] > summary svg:last-child {
+  transform: rotate(90deg);
+}
+.clean-ui .settings-content,
+.clean-ui .history-content {
+  padding: 0 20px 22px;
+}
+.clean-ui .setting-role {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.clean-ui .setting-role svg {
+  width: 15px;
+  height: 15px;
+}
+.clean-ui .setting-role > span {
+  display: flex;
+}
+.clean-ui .role-toggle {
+  min-height: 54px;
+}
+.clean-ui .role-toggle input {
+  cursor: pointer;
+}
+.clean-ui .role-toggle strong {
+  font-size: 15px;
+}
+.clean-ui .role-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px;
+  margin-bottom: 26px;
+  background: #132527;
+}
+.clean-ui .role-portrait-button {
+  flex: none;
+  padding: 0;
+  width: 60px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.clean-ui .role-portrait-button .portrait {
+  width: 60px;
+  height: 60px;
+}
+.clean-ui .role-strip-content {
+  flex: 1;
+  min-width: 0;
+}
+.clean-ui .role-strip-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.clean-ui .role-strip-heading h2 {
+  font-size: 23px;
+  line-height: 1.25;
+}
+.clean-ui .role-strip-heading svg {
+  width: 16px;
+  height: 16px;
+}
+.clean-ui .role-strip-content > p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #a8b8aa;
+  margin-top: 5px;
+}
+.clean-ui .role-strip > .icon-button {
+  margin: -5px -6px 0 0;
+}
+.clean-ui .known-players {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--dim);
+}
+.clean-ui .known-players > span:first-child {
+  margin-right: 3px;
+}
+.clean-ui .known-player {
+  border: 1px solid #a7b29436;
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: #e1dcc9;
+  overflow-wrap: anywhere;
+}
+.clean-ui .role-strip.concealed {
+  align-items: center;
+}
+.clean-ui .role-strip.concealed > svg {
+  width: 20px;
+  color: var(--dim);
+}
+.clean-ui .role-strip.concealed > span {
+  flex: 1;
+  font-size: 14px;
+  color: var(--dim);
+}
+.clean-ui .role-strip.concealed > .icon-button {
+  margin: 0;
+}
+.clean-ui .play-layout {
+  grid-template-columns: minmax(0, 1fr) 260px;
+  align-items: start;
+}
+.clean-ui .quest-board {
+  padding: 20px 24px 14px;
+}
+.clean-ui .quest-track {
+  padding: 10px 0 22px;
+}
+.clean-ui .quest-track:before {
+  top: 47px;
+}
+.clean-ui .quest-stop {
+  gap: 10px;
+}
+.clean-ui .quest-stop > span {
+  font-size: 13px;
+  color: #b6c3b1;
+}
+.clean-ui .quest-stop > span svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.clean-ui .quest-stop small {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+}
+.clean-ui .quest-stop small svg {
+  width: 12px;
+  height: 12px;
+}
+.clean-ui .rejection-track {
+  gap: 12px;
+  padding-top: 8px;
+}
+.clean-ui .rejection-track > span {
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.clean-ui .rejection-track > .icon-button {
+  margin-left: auto;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+}
+.clean-ui .rejection-track p {
+  width: 100%;
+  margin: 0;
+  font-size: 13px;
+  padding-bottom: 6px;
+}
+.clean-ui .rejection-track i {
+  width: 9px;
+  height: 9px;
+}
+.clean-ui .action-panel {
+  margin-top: 26px;
+  padding: 28px;
+  min-height: 0;
+  overflow: visible;
+  gap: 0;
+}
+.clean-ui .action-panel h2 {
+  font-size: 28px;
+  margin: 0 0 22px;
+}
+.clean-ui .action-panel .phase-icon {
+  margin-bottom: 20px;
+}
+.clean-ui .action-heading {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+.clean-ui .action-heading h2 {
+  margin: 0;
+}
+.clean-ui .leader-label {
+  margin: 0;
+  font-size: 13px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.clean-ui .leader-label svg {
+  flex: none;
+}
+.clean-ui .player-chips {
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.clean-ui .player-chip {
+  min-height: 70px;
+  padding: 13px;
+  gap: 10px;
+}
+.clean-ui .player-chip strong {
+  font-size: 14px;
+  padding-right: 4px;
+}
+.clean-ui .player-chip strong small {
+  display: block;
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+.clean-ui .player-chip .avatar {
+  width: 36px;
+  height: 36px;
+}
+.clean-ui .action-panel > .gold-button {
+  max-width: none;
+  margin-top: 26px;
+}
+.clean-ui .action-panel.phase-reveal > .gold-button {
+  margin-top: 0;
+}
+.clean-ui .submission-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 12px;
+  color: #9cb09f;
+  margin-top: 24px;
+}
+.clean-ui .submission-dots {
+  display: flex;
+  gap: 5px;
+}
+.clean-ui .submission-dots i {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border: 1px solid #80988777;
+  border-radius: 50%;
+}
+.clean-ui .submission-dots i.filled {
+  background: #b9cba0;
+  border-color: #b9cba0;
+}
+.clean-ui .team-tokens {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+}
+.clean-ui .team-tokens > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  padding: 8px 12px;
+  border: 1px solid #829f7533;
+  border-radius: 5px;
+  overflow-wrap: anywhere;
+}
+.clean-ui .team-tokens svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--gold);
+}
+.clean-ui .vote-actions {
+  width: 100%;
+  margin-top: 26px;
+}
+.clean-ui .vote-actions > button {
+  flex: 1;
+  min-width: 0;
+}
+.clean-ui .sealed-icon {
+  width: 27px;
+  height: 27px;
+  stroke-width: 1.5;
+  margin-top: 20px;
+  color: var(--good);
+}
+.clean-ui .quest-warning {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--gold);
+}
+.clean-ui .quest-warning svg {
+  width: 15px;
+  height: 15px;
+}
+.clean-ui .result-cards {
+  margin-top: 0;
+  justify-content: center;
+  width: 100%;
+  gap: 12px;
+}
+.clean-ui .result-cards > div {
+  width: 58px;
+  height: 78px;
+}
+.clean-ui .ending-roles {
+  margin-top: 24px;
+}
+.clean-ui .ending-roles .portrait {
+  width: 100%;
+}
+.clean-ui .chronicle {
+  margin-top: 0;
+  max-height: none;
+}
+.clean-ui .chronicle .entry-tabs {
+  margin-bottom: 12px;
+  gap: 22px;
+}
+.clean-ui .chronicle .entry-tabs button {
+  font-size: 14px;
+  padding-block: 12px;
+}
+.clean-ui .notice > svg {
+  width: 18px;
+  height: 18px;
+}
+@media (max-width: 800px) {
+  .clean-ui .home-stage {
+    padding: 60px 7%;
+    min-height: calc(100svh - 76px);
+  }
+  .clean-ui .intro {
+    width: 100%;
+    max-width: 380px;
+    margin-inline: auto;
+  }
+  .clean-ui .lobby-layout,
+  .clean-ui .play-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .clean-ui .game-sidebar {
+    display: block;
+  }
+  .clean-ui .game-shell {
+    max-width: 600px;
+    padding: 24px 6% 48px;
+  }
+  .clean-ui .role-strip {
+    margin-bottom: 24px;
+  }
+  .clean-ui .section-title > button {
+    display: inline-flex;
+  }
+}
+@media (max-width: 550px) {
+  .clean-ui header {
+    height: 68px;
+    padding-inline: 5%;
+  }
+  .clean-ui nav button:nth-child(2) {
+    display: inline-flex;
+  }
+  .clean-ui .brand {
+    font-size: 23px;
+    gap: 10px;
+    letter-spacing: 4px;
+  }
+  .clean-ui .brand > svg {
+    width: 28px;
+  }
+  .clean-ui .home-stage {
+    min-height: calc(100svh - 68px);
+    padding: 40px 7%;
+    background-position: 70% center;
+  }
+  .clean-ui .entry-panel {
+    padding-inline: 24px;
+    background: #102124df;
+  }
+  .clean-ui .character-section {
+    padding: 30px 6% 44px;
+  }
+  .clean-ui .section-title h2 {
+    font-size: 24px;
+  }
+  .clean-ui .character-grid {
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+    overflow-x: auto;
+    gap: 14px;
+    padding: 4px 0 10px;
+    scroll-snap-type: x proximity;
+  }
+  .clean-ui .character-card {
+    height: 220px;
+    min-height: 220px;
+    scroll-snap-align: start;
+  }
+  .clean-ui .card-info {
+    padding: 50px 12px 18px;
+  }
+  .clean-ui .card-info h3 {
+    font-size: 21px;
+  }
+  .clean-ui .card-info svg {
+    width: 15px;
+    height: 15px;
+  }
+  .clean-ui .table-bar {
+    margin-bottom: 24px;
+  }
+  .clean-ui .table-bar h1 {
+    font-size: 27px;
+  }
+  .clean-ui .room-code strong {
+    font-size: 18px;
+    letter-spacing: 2px;
+  }
+  .clean-ui .lobby-main {
+    padding: 22px 16px;
+  }
+  .clean-ui .seat {
+    padding: 12px 10px;
+    min-height: 68px;
+  }
+  .clean-ui .seat strong {
+    font-size: 15px;
+  }
+  .clean-ui .seat .avatar {
+    width: 34px;
+    height: 34px;
+  }
+  .clean-ui .seat-symbols {
+    gap: 6px;
+  }
+  .clean-ui .seat-symbols svg {
+    width: 14px;
+    height: 14px;
+  }
+  .clean-ui .role-strip {
+    gap: 12px;
+    padding: 15px 12px;
+  }
+  .clean-ui .role-portrait-button,
+  .clean-ui .role-portrait-button .portrait {
+    width: 48px;
+    height: 56px;
+  }
+  .clean-ui .role-strip-heading h2 {
+    font-size: 21px;
+  }
+  .clean-ui .role-strip-content > p {
+    font-size: 12px;
+    line-height: 1.65;
+  }
+  .clean-ui .role-strip > .icon-button {
+    min-width: 36px;
+    width: 36px;
+    padding: 7px;
+    margin-right: -4px;
+  }
+  .clean-ui .known-players {
+    gap: 6px;
+  }
+  .clean-ui .known-players > span:first-child {
+    flex-basis: 100%;
+  }
+  .clean-ui .quest-board {
+    padding: 20px 16px 8px;
+  }
+  .clean-ui .quest-track {
+    padding: 4px 0 22px;
+  }
+  .clean-ui .quest-track:before {
+    top: 26px;
+  }
+  .clean-ui .quest-stop > span svg {
+    display: block;
+  }
+  .clean-ui .rejection-track {
+    flex-wrap: wrap;
+  }
+  .clean-ui .rejection-track > span {
+    font-size: 12px;
+  }
+  .clean-ui .action-panel {
+    padding: 24px 18px;
+    margin-top: 24px;
+  }
+  .clean-ui .action-panel h2 {
+    font-size: 25px;
+  }
+  .clean-ui .action-heading {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .clean-ui .action-heading h2 {
+    font-size: 24px;
+  }
+  .clean-ui .player-chip {
+    min-height: 68px;
+    padding: 12px 10px;
+  }
+  .clean-ui .player-chip strong {
+    font-size: 13px;
+  }
+  .clean-ui .player-chip .avatar {
+    width: 29px;
+    height: 29px;
+  }
+  .clean-ui .result-cards {
+    gap: 8px;
+  }
+  .clean-ui .result-cards > div {
+    width: calc((100% - 32px) /5);
+    max-width: 58px;
+    height: 70px;
+  }
+}
+
+/* Physical tabletop: the scene carries the players, the board and the tokens. */
+.clean-ui .play-layout {
+  display: block;
+}
+.clean-ui .play-main {
+  min-width: 0;
+}
+.clean-ui .game-shell {
+  max-width: 760px;
+}
+.clean-ui .lobby-layout {
+  display: block;
+}
+.clean-ui .lobby-main {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.clean-ui .lobby-sidebar {
+  margin-top: 28px;
+}
+.clean-ui .tabletop {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: 580px;
+  background: #172b27 url('/art/tabletop.png') center / 100% 100% no-repeat;
+  border: 1px solid #76613d;
+  border-radius: 26px;
+  box-shadow:
+    0 18px 40px #0005,
+    inset 0 0 24px #0005;
+}
+.clean-ui .tabletop-center {
+  position: absolute;
+  inset: 25% 25%;
+  display: grid;
+  align-items: center;
+}
+.clean-ui .table-lobby-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  color: #d2b579;
+}
+.clean-ui .table-lobby-center > svg {
+  width: 42px;
+  height: 42px;
+  stroke-width: 1;
+}
+.clean-ui .table-brand {
+  font-family: var(--font-display, Georgia), serif;
+  letter-spacing: 0.22em;
+  font-size: 23px;
+}
+.clean-ui .table-seat-count {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: #c4c5b5;
+  font-size: 14px;
+}
+.clean-ui .table-seat-count svg {
+  width: 16px;
+}
+.clean-ui .table-seat {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 76px;
+  height: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #eee6d5;
+  opacity: 1;
+  transition: filter 0.18s ease;
+  cursor: default;
+}
+.clean-ui .table-seat:enabled {
+  cursor: pointer;
+}
+.clean-ui .table-seat:enabled:hover .pawn-piece {
+  transform: translateY(-3px);
+}
+.clean-ui .table-seat:focus-visible {
+  outline: 2px solid #f0d491;
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+.clean-ui .pawn-piece {
+  position: relative;
+  display: block;
+  width: 48px;
+  height: 48px;
+  transition: transform 0.18s ease;
+}
+.clean-ui .pawn-piece > svg:first-child {
+  width: 44px;
+  height: 44px;
+  color: var(--pawn-color);
+  fill: color-mix(in srgb, var(--pawn-color) 65%, #22302b);
+  stroke-width: 1.2;
+  filter: drop-shadow(0 3px 0 #0c1715) drop-shadow(0 6px 3px #0008);
+}
+.clean-ui .pawn-name {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  text-shadow: 0 1px 3px #000;
+}
+.clean-ui .pawn-you {
+  position: absolute;
+  top: 76px;
+  font-size: 10px;
+  line-height: 12px;
+  color: #d5bd85;
+}
+.clean-ui .my-seat .pawn-name {
+  color: #f0d491;
+}
+.clean-ui .leader-coin,
+.clean-ui .team-coin {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  box-shadow:
+    0 2px 1px #171610,
+    inset 0 0 0 2px #e6c57c55;
+  border: 1px solid #e2c485;
+}
+.clean-ui .leader-coin {
+  top: -5px;
+  left: -10px;
+  background: linear-gradient(135deg, #d9bd77, #725122);
+  color: #30230f;
+}
+.clean-ui .team-coin {
+  bottom: 0;
+  right: -6px;
+  color: #eff5e3;
+  background: linear-gradient(135deg, #648c85, #25443e);
+}
+.clean-ui .leader-coin svg,
+.clean-ui .team-coin svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2;
+}
+.clean-ui .chosen .pawn-piece {
+  border-radius: 50%;
+  background: #d5b76b22;
+  box-shadow:
+    0 0 0 1px #d3b77b99,
+    0 0 18px #e0bd5830;
+}
+.clean-ui .pawn-offline {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  width: 14px;
+  color: #cc9d77;
+}
+.clean-ui .empty-seat {
+  color: #c4c0a64d;
+  gap: 0;
+}
+.clean-ui .empty-seat > svg {
+  width: 34px;
+  height: 34px;
+  stroke-width: 1;
+}
+.clean-ui .empty-seat > span {
+  font-size: 17px;
+}
+.clean-ui .tabletop .quest-board {
+  padding: 16px 10px;
+  border-radius: 8px;
+  background: #122d29e8;
+  border: 1px solid #ac926150;
+  box-shadow:
+    0 5px 10px #0005,
+    inset 0 0 0 4px #ac926111;
+}
+.clean-ui .tabletop .quest-track {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px 10px;
+  margin: 0;
+}
+.clean-ui .tabletop .quest-track::before {
+  display: none;
+}
+.clean-ui .tabletop .quest-stop {
+  flex: 0 0 26%;
+  gap: 5px;
+  min-width: 0;
+}
+.clean-ui .tabletop .quest-medallion {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  font-size: 18px;
+  color: #dfc996;
+  background: radial-gradient(circle at 35% 25%, #65716a, #293e36 75%);
+  border: 2px solid #978256;
+  box-shadow:
+    0 3px 0 #101d18,
+    0 5px 5px #0004,
+    inset 0 0 0 2px #13241f,
+    inset 0 0 0 3px #baa77c55;
+}
+.clean-ui .tabletop .quest-stop.current .quest-medallion {
+  border-color: #edd59c;
+  box-shadow:
+    0 0 0 3px #c5a86330,
+    0 3px 0 #101d18;
+}
+.clean-ui .tabletop .quest-stop.success .quest-medallion {
+  background: radial-gradient(circle at 35% 25%, #7bb8b6, #264d56);
+}
+.clean-ui .tabletop .quest-stop.failed .quest-medallion {
+  background: radial-gradient(circle at 35% 25%, #b88075, #632f32);
+}
+.clean-ui .tabletop .quest-medallion svg {
+  width: 20px;
+  height: 20px;
+}
+.clean-ui .tabletop .quest-stop > span {
+  font-size: 11px;
+  gap: 3px;
+}
+.clean-ui .tabletop .quest-stop > span svg {
+  width: 11px;
+  height: 11px;
+}
+.clean-ui .tabletop .quest-stop small {
+  font-size: 10px;
+}
+.clean-ui .tabletop .rejection-track {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 8px;
+  margin: 14px 0 0;
+  padding: 10px 0 0;
+}
+.clean-ui .tabletop .rejection-track > span {
+  font-size: 10px;
+}
+.clean-ui .tabletop .rejection-track > div {
+  gap: 5px;
+}
+.clean-ui .tabletop .rejection-track .icon-button {
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
+  height: 44px;
+}
+.clean-ui .tabletop .rejection-track p {
+  font-size: 10px;
+  width: 100%;
+  text-align: center;
+  margin: 0;
+}
+.clean-ui .action-panel {
+  margin-top: 20px;
+  border: none;
+  background: none;
+  box-shadow: none;
+  padding: 4px 0 16px;
+  text-align: center;
+}
+.clean-ui .action-heading {
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+}
+.clean-ui .action-panel h2 {
+  font-size: 23px;
+}
+.clean-ui .action-panel .gold-button {
+  margin-top: 16px;
+}
+.clean-ui .vote-actions {
+  justify-content: center;
+  gap: 22px;
+  margin-top: 22px;
+}
+.clean-ui .vote-actions .success-button,
+.clean-ui .vote-actions .danger-button {
+  width: 112px;
+  height: 148px;
+  min-height: 148px;
+  flex: 0 1 112px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 8px;
+  border-radius: 7px;
+  color: #eadbb3;
+  border: 1px solid #af925d;
+  background: linear-gradient(145deg, #47635a, #19322d);
+  box-shadow:
+    inset 0 0 0 4px #13291f,
+    inset 0 0 0 5px #ac925b77,
+    0 4px 0 #111b17,
+    0 8px 16px #0005;
+  font-family: Georgia, serif;
+  font-weight: 500;
+  transition: transform 0.18s ease;
+}
+.clean-ui .vote-actions .danger-button {
+  background: linear-gradient(145deg, #74514a, #392725);
+}
+.clean-ui .vote-actions button:enabled:hover {
+  transform: translateY(-4px) rotate(1deg);
+}
+.clean-ui .vote-actions button svg {
+  width: 40px;
+  height: 40px;
+  stroke-width: 1.2;
+}
+.clean-ui .phase-vote .vote-actions button {
+  width: 90px;
+  height: 108px;
+  min-height: 108px;
+}
+.clean-ui .phase-vote .vote-actions button svg {
+  padding: 8px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid #bea36b;
+  background: #b8994e22;
+  box-shadow: inset 0 0 0 3px #b8994e11;
+}
+.clean-ui .role-strip {
+  border-color: #9c835a66;
+  border-radius: 8px;
+  background: linear-gradient(115deg, #273630, #14231f);
+  box-shadow: 0 4px 9px #0003;
+}
+.clean-ui .role-strip .portrait {
+  border: 1px solid #9b8457;
+  border-radius: 4px;
+}
+.clean-ui .lobby-bottom {
+  margin-top: 28px;
+  padding-inline: 12px;
+}
+.clean-ui .muted-footnote {
+  display: block;
+  text-align: center;
+}
+.clean-ui .history-panel {
+  margin-top: 28px;
+}
+.clean-ui .manage-seats {
+  margin-bottom: 20px;
+}
+.clean-ui .manage-seats summary {
+  font-size: 14px;
+  padding: 8px 0;
+}
+.clean-ui .manage-seats > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.clean-ui .target-name {
+  margin: 10px 0;
+  color: var(--gold);
+}
+@media (max-width: 600px) {
+  .clean-ui .game-shell {
+    padding: 18px 14px 40px;
+  }
+  .clean-ui .table-bar {
+    margin-bottom: 18px;
+  }
+  .clean-ui .tabletop {
+    height: 450px;
+    border-radius: 18px;
+  }
+  .clean-ui .table-seat {
+    width: 58px;
+    height: 68px;
+  }
+  .clean-ui .pawn-piece {
+    width: 40px;
+    height: 40px;
+  }
+  .clean-ui .pawn-piece > svg:first-child {
+    width: 36px;
+    height: 36px;
+  }
+  .clean-ui .pawn-name {
+    font-size: 11px;
+    line-height: 18px;
+  }
+  .clean-ui .pawn-you {
+    top: 63px;
+    font-size: 9px;
+  }
+  .clean-ui .tabletop-center {
+    inset: 24% 24%;
+  }
+  .clean-ui .tabletop .quest-board {
+    padding: 12px 5px 6px;
+  }
+  .clean-ui .tabletop .quest-track {
+    gap: 10px 5px;
+  }
+  .clean-ui .tabletop .quest-medallion {
+    width: 34px;
+    height: 34px;
+    font-size: 15px;
+  }
+  .clean-ui .tabletop .quest-stop small {
+    position: static;
+  }
+  .clean-ui .tabletop .rejection-track {
+    gap: 0 5px;
+    margin-top: 8px;
+    padding-top: 6px;
+  }
+  .clean-ui .table-brand {
+    font-size: 18px;
+  }
+  .clean-ui .role-strip {
+    margin-bottom: 18px;
+  }
+  .clean-ui .action-panel h2 {
+    font-size: 22px;
+  }
+  .clean-ui .lobby-main {
+    padding: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .clean-ui .table-seat,
+  .clean-ui .pawn-piece,
+  .clean-ui .vote-actions button {
+    transition: none;
+  }
+}
+.clean-ui .table-seats {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  border: 0;
+  pointer-events: none;
+}
+.clean-ui .table-seat {
+  pointer-events: auto;
+}
+.clean-ui .tabletop .quest-track {
+  padding: 0;
+}
+.clean-ui .tabletop .quest-medallion {
+  margin-bottom: 0;
+}
+.clean-ui .tabletop .quest-medallion > span {
+  font-size: inherit;
+  color: inherit;
+}
+.clean-ui .action-panel {
+  min-height: 0;
+}
+@media (max-width: 600px) {
+  .clean-ui .tabletop {
+    height: clamp(370px, 53svh, 450px);
+  }
+}
+.clean-ui .phase-quest .vote-actions .success-button,
+.clean-ui .phase-quest .vote-actions .danger-button,
+.clean-ui .result-cards .success-card,
+.clean-ui .result-cards .fail-card {
+  background-image:
+    linear-gradient(0deg, #07100df2, transparent 32%),
+    url('/art/quest-cards.png');
+  background-size:
+    100% 100%,
+    200% 100%;
+  background-position:
+    center,
+    left center;
+  justify-content: flex-end;
+  color: #f0dfb4;
+  text-shadow: 0 1px 3px #000;
+}
+.clean-ui .phase-quest .vote-actions .danger-button,
+.clean-ui .result-cards .fail-card {
+  background-position:
+    center,
+    right center;
+}
+.clean-ui .phase-quest .vote-actions button > svg {
+  display: none;
+}
+.clean-ui .result-cards > div {
+  width: 70px;
+  height: 98px;
+  border: 1px solid #ae925f;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 9px;
+  box-shadow:
+    0 3px 0 #151c17,
+    0 7px 12px #0004;
+}
+.clean-ui .result-cards > div svg {
+  width: 19px;
+  height: 19px;
+}

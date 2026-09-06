@@ -16,19 +16,17 @@ import {
   Crown,
   Eye,
   EyeOff,
-  Feather,
-  Flame,
-  Flag,
-  Heart,
-  Leaf,
   LogOut,
-  Moon,
   Shield,
-  Sparkles,
+  Bot,
+  Settings2,
+  History,
+  CircleHelp,
   Swords,
   Users,
   X,
 } from 'lucide-react';
+import { GameTable } from '@/components/game-table';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -36,20 +34,49 @@ import {
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  ROLES,
-  OPTIONAL,
-  QUEST_NAMES,
-  EVIL_COUNT,
-  type Role,
-} from '@/lib/game/roles';
+import { ROLES, OPTIONAL, EVIL_COUNT, type Role } from '@/lib/game/roles';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { RoomView } from '@/lib/game/engine';
 
 type Session = { code: string; token: string };
 type Modal = 'rules' | 'characters' | 'identity' | 'leave' | null;
-const symbols = [Crown, Feather, Flame, Moon, Leaf, Shield, Heart, Flag];
+const ROLE_HINTS: Record<Role, string> = {
+  Merlin: 'See evil, except Mordred. Stay hidden.',
+  Percival: 'Find the real Merlin.',
+  Servant: 'Help three quests succeed.',
+  Assassin: 'Find Merlin after three successful quests.',
+  Morgana: 'Appear as Merlin to Percival.',
+  Mordred: 'Hidden from Merlin.',
+  Oberon: 'Evil. Your allies are unknown.',
+  Minion: 'Help three quests fail.',
+};
+function Progress({
+  count,
+  total,
+  label,
+}: {
+  count: number;
+  total: number;
+  label: string;
+}) {
+  return (
+    <output
+      className="submission-progress"
+      aria-label={`${label}: ${count} of ${total}`}
+      aria-live="polite"
+    >
+      <span className="submission-dots" aria-hidden="true">
+        {Array.from({ length: total }, (_, i) => (
+          <i key={i} className={i < count ? 'filled' : ''} />
+        ))}
+      </span>
+      <span>
+        {count}/{total}
+      </span>
+    </output>
+  );
+}
 const FEATURED: Role[] = ['Merlin', 'Percival', 'Morgana', 'Assassin'];
 function Portrait({
   role,
@@ -70,14 +97,6 @@ function Portrait({
         style={{ left: `${-(n % 4) * 100}%`, top: n < 4 ? '0' : '-100%' }}
       />
     </div>
-  );
-}
-function Avatar({ n }: { n: number }) {
-  const Icon = symbols[n % symbols.length];
-  return (
-    <span className={`avatar avatar-${n % 4}`}>
-      <Icon />
-    </span>
   );
 }
 async function request(
@@ -117,6 +136,7 @@ export default function Home() {
   const [modal, setModal] = useState<Modal>(null);
   const [character, setCharacter] = useState<Role>('Merlin');
   const [revealed, setRevealed] = useState(false);
+  const [roleHidden, setRoleHidden] = useState(false);
   const selectionKey = [
     room?.code,
     room?.phase,
@@ -212,6 +232,7 @@ export default function Home() {
     const hide = () => {
       if (document.hidden) {
         setRevealed(false);
+        setRoleHidden(true);
         setModal((m) => (m === 'identity' ? null : m));
       }
     };
@@ -351,7 +372,7 @@ export default function Home() {
     void enter();
   }
   return (
-    <main className={`shell ${room ? 'in-game' : ''}`}>
+    <main className={`shell clean-ui ${room ? 'in-game' : ''}`}>
       <header>
         <Link
           className="brand"
@@ -364,22 +385,34 @@ export default function Home() {
           }}
         >
           <Crown />
-          <span>
-            AVALON<small>THE ROUND TABLE</small>
-          </span>
+          <span>AVALON</span>
         </Link>
-        <nav>
-          <button onClick={() => setModal('rules')}>How to play</button>
-          <button onClick={() => setModal('characters')}>The characters</button>
-          {room ? (
-            <button className="nav-leave" onClick={() => setModal('leave')}>
+        <nav aria-label="Game help">
+          <button
+            className="icon-button"
+            aria-label="How to play"
+            title="How to play"
+            onClick={() => setModal('rules')}
+          >
+            <BookOpen />
+          </button>
+          <button
+            className="icon-button"
+            aria-label="Characters"
+            title="Characters"
+            onClick={() => setModal('characters')}
+          >
+            <Users />
+          </button>
+          {room && (
+            <button
+              className="icon-button"
+              aria-label="Leave table"
+              title="Leave table"
+              onClick={() => setModal('leave')}
+            >
               <LogOut />
-              <span>Leave table</span>
             </button>
-          ) : (
-            <span className="online">
-              <i /> A seat awaits
-            </span>
           )}
         </nav>
       </header>
@@ -391,74 +424,49 @@ export default function Home() {
           </button>
         </div>
       )}
-      {connection && <output className="notice">{connection}</output>}
+      {connection && (
+        <output className="notice">
+          <Clock3 />
+          Reconnecting…
+        </output>
+      )}
       {!room ? (
         <>
           <section className="home-stage">
             <div className="intro">
-              <div className="eyebrow">
-                <span /> A GAME OF HIDDEN LOYALTIES
-              </div>
-              <h1>
-                The fate of Camelot.
-                <br />
-                <em>In your hands.</em>
-              </h1>
-              <p>
-                Gather your friends. Keep your secrets.
-                <br />
-                Not everyone at the table serves the same king.
-              </p>
-              <div className="facts">
-                <span>
-                  <Users />
-                  5–10 players
-                </span>
-                <span>
-                  <Clock3 />
-                  30 minutes
-                </span>
-                <span>
-                  <Shield />
-                  No account needed
-                </span>
-              </div>
+              <h1 className="sr-only">Play Avalon</h1>
               <form className="entry-panel" onSubmit={submitEntry}>
-                <div
-                  className="entry-tabs"
-                  role="tablist"
-                  aria-label="Host or join"
-                >
+                <div className="entry-tabs" aria-label="Host or join">
                   <button
                     type="button"
-                    role="tab"
-                    aria-selected={tab === 'host'}
+                    aria-pressed={tab === 'host'}
                     className={tab === 'host' ? 'active' : ''}
                     onClick={() => {
                       setTab('host');
                       setError('');
                     }}
                   >
-                    Host a game
+                    <Crown />
+                    Host
                   </button>
                   <button
                     type="button"
-                    role="tab"
-                    aria-selected={tab === 'join'}
+                    aria-pressed={tab === 'join'}
                     className={tab === 'join' ? 'active' : ''}
                     onClick={() => {
                       setTab('join');
                       setError('');
                     }}
                   >
-                    Join a game
+                    <Users />
+                    Join
                   </button>
                 </div>
-                <label htmlFor="name">YOUR NAME AT THE TABLE</label>
+                <label htmlFor="name">Your name</label>
                 <input
                   autoComplete="off"
                   id="name"
-                  placeholder="What shall we call you?"
+                  placeholder="Name"
                   required
                   maxLength={20}
                   value={name}
@@ -466,12 +474,12 @@ export default function Home() {
                 />
                 {tab === 'join' && (
                   <div className="code-field">
-                    <label htmlFor="code">ROOM CODE</label>
+                    <label htmlFor="code">Room code</label>
                     <input
                       id="code"
                       autoComplete="off"
                       autoCapitalize="characters"
-                      placeholder="e.g. CAME7T"
+                      placeholder="ABC234"
                       required
                       minLength={6}
                       maxLength={6}
@@ -488,53 +496,44 @@ export default function Home() {
                 )}
                 <Button type="submit" className="gold-button" disabled={busy}>
                   {busy
-                    ? 'Preparing your seat…'
+                    ? 'Joining…'
                     : tab === 'host'
-                      ? 'Create a room'
-                      : 'Join the table'}
+                      ? 'Create room'
+                      : 'Join room'}
                   <ArrowRight />
                 </Button>
-                <div className="entry-note">
-                  {tab === 'host'
-                    ? 'A private table. An invitation for your friends.'
-                    : 'Enter the six-character code from your host.'}
-                </div>
               </form>
-              <button
-                className="practice-link"
-                disabled={busy}
-                onClick={() => void enter(true)}
-              >
-                Just exploring?{' '}
-                <span>
-                  Try a practice game <ArrowRight />
+              <div className="entry-extras">
+                <span aria-label="5 to 10 players">
+                  <Users />
+                  5–10
                 </span>
-              </button>
+                <button disabled={busy} onClick={() => void enter(true)}>
+                  <Bot />
+                  Practice
+                </button>
+              </div>
               {session && (
                 <button
                   className="resume-link"
                   disabled={busy}
                   onClick={() => void send('poll')}
                 >
-                  Return to table {session.code} <ArrowRight />
+                  Resume {session.code}
+                  <ArrowRight />
                 </button>
               )}
             </div>
-            <div className="scene-caption">
-              <span>THE KINGDOM IS DIVIDED</span>
-              <p>Trust is your greatest weapon.</p>
-            </div>
           </section>
-          <section className="character-section">
+          <section className="character-section" aria-label="Character gallery">
             <div className="section-title">
-              <div>
-                <div className="eyebrow">
-                  LOYAL TO ARTHUR. OR SOMETHING DARKER.
-                </div>
-                <h2>Every face hides a secret.</h2>
-              </div>
-              <button onClick={() => setModal('characters')}>
-                Meet the characters <ArrowRight />
+              <h2>Characters</h2>
+              <button
+                className="icon-button"
+                aria-label="View all characters"
+                onClick={() => setModal('characters')}
+              >
+                <ArrowRight />
               </button>
             </div>
             <div className="character-grid">
@@ -549,17 +548,14 @@ export default function Home() {
                 >
                   <Portrait role={role} />
                   <div className="card-info">
-                    <span className={ROLES[role].side}>
-                      {ROLES[role].side === 'good'
-                        ? 'FOR CAMELOT'
-                        : 'AGAINST THE CROWN'}
-                    </span>
                     <h3>{ROLES[role].name}</h3>
-                    <p>{ROLES[role].line}</p>
+                    <span
+                      className={ROLES[role].side}
+                      aria-label={ROLES[role].side === 'good' ? 'Good' : 'Evil'}
+                    >
+                      {ROLES[role].side === 'good' ? <Shield /> : <Swords />}
+                    </span>
                   </div>
-                  <span className="card-arrow">
-                    <ArrowRight />
-                  </span>
                 </button>
               ))}
             </div>
@@ -568,26 +564,22 @@ export default function Home() {
       ) : (
         <section className="game-shell">
           <div className="table-bar">
-            <div>
-              <div className="eyebrow">
-                {room.practice
-                  ? 'SOLO PRACTICE • 4 COMPUTER PLAYERS'
-                  : 'YOUR PRIVATE ROUND TABLE'}
-              </div>
-              <h1>
-                {room.phase === 'lobby'
-                  ? 'The gathering'
-                  : room.phase === 'finished'
-                    ? 'The story is told'
-                    : 'The quest for Camelot'}
-              </h1>
-            </div>
+            <h1>
+              {room.phase === 'lobby'
+                ? 'Lobby'
+                : room.phase === 'finished'
+                  ? 'Game over'
+                  : `Quest ${room.round + 1}`}
+              {room.practice && (
+                <Bot className="practice-icon" aria-label="Practice game" />
+              )}
+            </h1>
             <button
               className="room-code"
               onClick={copy}
-              aria-label={`Copy invitation for room ${room.code}`}
+              aria-label={`Copy room invitation ${room.code}`}
+              title="Copy invitation"
             >
-              <span>ROOM CODE</span>
               <strong>{room.code}</strong>
               {copied ? <Check /> : <Copy />}
             </button>
@@ -595,84 +587,7 @@ export default function Home() {
           {room.phase === 'lobby' ? (
             <div className="lobby-layout">
               <section className="panel lobby-main">
-                <div className="panel-heading">
-                  <div>
-                    <h2>A place at the table.</h2>
-                    <p>
-                      {room.practice
-                        ? 'Learn by playing a full game with computer players.'
-                        : 'Invite your friends, then ready up. Your roles are still a mystery.'}
-                    </p>
-                  </div>
-                  <span className="count-badge">
-                    <Users />
-                    {room.players.length}/{room.capacity}
-                  </span>
-                </div>
-                <div className="seats">
-                  {Array.from({ length: room.capacity }, (_, i) => {
-                    const p = room.players[i];
-                    return (
-                      <div
-                        className={`seat ${p ? 'occupied' : ''}`}
-                        key={p?.id ?? i}
-                      >
-                        {p ? (
-                          <>
-                            <Avatar n={p.avatar} />
-                            <div>
-                              <strong>
-                                {p.name}
-                                {p.id === me?.id && <small> YOU</small>}
-                              </strong>
-                              <span>
-                                {p.id === room.host
-                                  ? 'Table host'
-                                  : p.bot
-                                    ? 'Computer player'
-                                    : p.online
-                                      ? 'At the table'
-                                      : 'Reconnecting…'}
-                              </span>
-                            </div>
-                            <span
-                              className={`ready-status ${p.ready ? 'good' : ''}`}
-                            >
-                              {p.ready ? (
-                                <>
-                                  <Check />
-                                  Ready
-                                </>
-                              ) : (
-                                'Not ready'
-                              )}
-                            </span>
-                            {host && p.id !== me?.id && !p.bot && (
-                              <button
-                                className="remove-player"
-                                aria-label={`Remove ${p.name}`}
-                                onClick={() =>
-                                  void send('remove', { target: p.id })
-                                }
-                              >
-                                <X />
-                              </button>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            <span className="empty-avatar">{i + 1}</span>
-                            <div>
-                              <strong>An open seat</strong>
-                              <span>Waiting for a friend</span>
-                            </div>
-                            <span className="seat-dot" />
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                <GameTable room={room} />
                 <div className="lobby-bottom">
                   <Button
                     className={`outline-button ${me?.ready ? 'ready-button' : ''}`}
@@ -680,9 +595,9 @@ export default function Home() {
                     onClick={() => void send('ready', { ready: !me?.ready })}
                   >
                     {me?.ready ? <Check /> : <Shield />}
-                    {me?.ready ? 'You’re ready' : 'I’m ready'}
+                    {me?.ready ? 'Ready' : 'Ready up'}
                   </Button>
-                  {host ? (
+                  {host && (
                     <Button
                       className="gold-button"
                       disabled={
@@ -692,277 +607,414 @@ export default function Home() {
                       }
                       onClick={() => void send('start')}
                     >
-                      Deal the roles <ArrowRight />
+                      Start
+                      <ArrowRight />
                     </Button>
-                  ) : (
-                    <p>Once everyone is ready, the host can begin.</p>
                   )}
                 </div>
-                <p className="muted-footnote">
+                <output className="muted-footnote">
                   {room.players.length < 5
-                    ? `${5 - room.players.length} more ${5 - room.players.length === 1 ? 'player' : 'players'} needed to begin.`
-                    : room.players.every((p) => p.ready)
-                      ? 'Everyone is ready. Let the secrets begin.'
-                      : 'Waiting for everyone to ready up.'}
-                </p>
+                    ? `${5 - room.players.length} more needed`
+                    : !room.players.every((p) => p.ready)
+                      ? `${room.players.filter((p) => p.ready).length}/${room.players.length} ready`
+                      : host
+                        ? 'Ready to start'
+                        : 'Waiting for host'}
+                </output>
               </section>
               <aside className="lobby-sidebar">
-                <section className="panel settings">
-                  <div className="eyebrow">THE WAY YOU PLAY</div>
-                  <h2>Table settings</h2>
-                  <label htmlFor="capacity">SEATS AT THE TABLE</label>
-                  <select
-                    id="capacity"
-                    disabled={!host || busy || room.practice}
-                    value={room.capacity}
-                    onChange={(e) =>
-                      void send('configure', {
-                        capacity: Number(e.target.value),
-                        optional: room.optional,
-                      })
-                    }
-                  >
-                    {[5, 6, 7, 8, 9, 10].map((n) => (
-                      <option
-                        key={n}
-                        value={n}
-                        disabled={n < room.players.length}
-                      >
-                        {n} players · {n - EVIL_COUNT[n]} good / {EVIL_COUNT[n]}{' '}
-                        evil
-                      </option>
-                    ))}
-                  </select>
-                  <div className="settings-divider" />
-                  <p className="field-label">SPECIAL CHARACTERS</p>
-                  <p className="settings-hint">
-                    Merlin and the Assassin always play.
-                  </p>
-                  {OPTIONAL.map((role) => (
-                    <label
-                      key={role}
-                      className="role-toggle"
-                      aria-label={ROLES[role].name}
+                <details className="panel settings">
+                  <summary>
+                    <Settings2 />
+                    Settings
+                    <ChevronRight />
+                  </summary>
+                  <div className="settings-content">
+                    {host &&
+                      room.players.some((p) => p.id !== me?.id && !p.bot) && (
+                        <details className="manage-seats">
+                          <summary>Manage players</summary>
+                          {room.players
+                            .filter((p) => p.id !== me?.id && !p.bot)
+                            .map((p) => (
+                              <div key={p.id}>
+                                <span>{p.name}</span>
+                                <button
+                                  className="icon-button"
+                                  disabled={busy}
+                                  aria-label={`Remove ${p.name}`}
+                                  onClick={() =>
+                                    void send('remove', { target: p.id })
+                                  }
+                                >
+                                  <X />
+                                </button>
+                              </div>
+                            ))}
+                        </details>
+                      )}
+                    <label htmlFor="capacity">Players</label>
+                    <select
+                      id="capacity"
+                      disabled={!host || busy || room.practice}
+                      value={room.capacity}
+                      onChange={(e) =>
+                        void send('configure', {
+                          capacity: Number(e.target.value),
+                          optional: room.optional,
+                        })
+                      }
                     >
-                      <span>
-                        <strong>{ROLES[role].name}</strong>
-                        <small className={ROLES[role].side}>
-                          {ROLES[role].title}
-                        </small>
-                      </span>
-                      <input
-                        type="checkbox"
-                        checked={room.optional.includes(role)}
-                        disabled={!host || busy}
-                        onChange={(e) =>
-                          void send('configure', {
-                            capacity: room.capacity,
-                            optional: e.target.checked
-                              ? [...room.optional, role]
-                              : room.optional.filter((r) => r !== role),
-                          })
-                        }
-                      />
-                    </label>
-                  ))}
-                  <button
-                    className="text-link"
-                    onClick={() => setModal('characters')}
-                  >
-                    Learn about each character <ArrowRight />
-                  </button>
-                </section>
-                <div className="tip">
-                  <Sparkles />
-                  <p>
-                    {room.practice
-                      ? 'Computer players make simple decisions. Practice teaches the flow; the real intrigue comes from friends.'
-                      : 'Play together in person or on a voice call. Each player uses their own screen to keep their identity secret.'}
-                  </p>
-                </div>
+                      {[5, 6, 7, 8, 9, 10].map((n) => (
+                        <option
+                          key={n}
+                          value={n}
+                          disabled={n < room.players.length}
+                        >
+                          {n} · {n - EVIL_COUNT[n]} good / {EVIL_COUNT[n]} evil
+                        </option>
+                      ))}
+                    </select>
+                    <div className="settings-divider" />
+                    {OPTIONAL.map((role) => (
+                      <label
+                        key={role}
+                        className="role-toggle"
+                        aria-label={ROLES[role].name}
+                      >
+                        <span className="setting-role">
+                          <span className={ROLES[role].side}>
+                            {ROLES[role].side === 'good' ? (
+                              <Shield />
+                            ) : (
+                              <Swords />
+                            )}
+                          </span>
+                          <strong>{ROLES[role].name}</strong>
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={room.optional.includes(role)}
+                          disabled={!host || busy}
+                          onChange={(e) =>
+                            void send('configure', {
+                              capacity: room.capacity,
+                              optional: e.target.checked
+                                ? [...room.optional, role]
+                                : room.optional.filter((r) => r !== role),
+                            })
+                          }
+                        />
+                      </label>
+                    ))}
+                    <button
+                      className="text-link"
+                      onClick={() => setModal('characters')}
+                    >
+                      Character guide
+                      <ArrowRight />
+                    </button>
+                  </div>
+                </details>
               </aside>
             </div>
           ) : (
-            <div className="play-layout">
-              <div className="play-main">
-                <section className="quest-board panel">
-                  <div className="board-heading">
-                    <span className="eyebrow">THE FIVE QUESTS</span>
-                    <div className="score">
-                      <span className="good">
-                        {room.quests.filter((q) => q.success).length} GOOD
-                      </span>
-                      <span> / </span>
-                      <span className="evil">
-                        {room.quests.filter((q) => !q.success).length} EVIL
-                      </span>
-                    </div>
-                  </div>
-                  <div className="quest-track">
-                    {room.teamSizes.map((size, i) => {
-                      const q = room.quests[i];
-                      return (
-                        <div
-                          className={`quest-stop ${q ? (q.success ? 'success' : 'failed') : i === room.round ? 'current' : ''}`}
-                          key={i}
-                        >
-                          <div className="quest-medallion">
-                            {q ? (
-                              q.success ? (
-                                <Shield />
-                              ) : (
-                                <Swords />
-                              )
-                            ) : (
-                              <span>{['I', 'II', 'III', 'IV', 'V'][i]}</span>
-                            )}
-                          </div>
-                          <strong>Quest {i + 1}</strong>
-                          <span>
-                            <Users />
-                            {size} players
-                          </span>
-                          {i === 3 && room.players.length >= 7 && (
-                            <small>2 fails needed</small>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="rejection-track">
-                    <span>REJECTED TEAMS</span>
-                    <div>
-                      {[0, 1, 2, 3, 4].map((i) => (
-                        <i
-                          key={i}
-                          className={i < room.rejections ? 'filled' : ''}
-                        />
-                      ))}
-                    </div>
-                    <p>
-                      {room.rejections === 4
-                        ? 'One more rejection gives evil the win.'
-                        : 'Five rejections in a row. One fallen kingdom.'}
-                    </p>
-                  </div>
-                </section>
+            <>
+              {room.me.role && (room.phase !== 'reveal' || me?.ready) && (
                 <section
-                  className={`panel action-panel phase-${room.phase}`}
-                  aria-live="polite"
+                  className={`role-strip panel ${roleHidden ? 'concealed' : ''}`}
+                  aria-label="Your private role"
                 >
-                  {room.phase === 'reveal' && (
+                  {roleHidden ? (
                     <>
-                      <div className="phase-icon">
+                      <EyeOff />
+                      <span>Role hidden</span>
+                      <button
+                        className="icon-button"
+                        onClick={() => setRoleHidden(false)}
+                        aria-label="Show role and knowledge"
+                        title="Show role"
+                      >
                         <Eye />
-                      </div>
-                      <div className="eyebrow">BEFORE THE FIRST QUEST</div>
-                      <h2>Every secret has a keeper.</h2>
-                      <p>
-                        Your character has been dealt. Discover your loyalty and
-                        learn what only you know.
-                      </p>
-                      <Button className="gold-button" onClick={showIdentity}>
-                        Reveal my character <Eye />
-                      </Button>
-                      <span className="action-hint">
-                        {room.submitted}/{room.players.length} players have
-                        confirmed their roles.
-                      </span>
+                      </button>
                     </>
-                  )}
-                  {room.phase === 'team' && (
+                  ) : (
                     <>
-                      <div className="eyebrow">
-                        QUEST {room.round + 1} ·{' '}
-                        {QUEST_NAMES[room.round].toUpperCase()}
-                      </div>
-                      <h2>
-                        {myTurn
-                          ? 'Whom do you trust?'
-                          : `${leader?.name} is choosing a team.`}
-                      </h2>
-                      <p>
-                        {myTurn
-                          ? `Choose ${required} players below to embark on this quest. You may choose yourself.`
-                          : 'Discuss the choices together. Everyone will vote on the proposed team.'}
-                      </p>
-                      <div className="leader-label">
-                        <Crown /> {myTurn ? 'You are' : `${leader?.name} is`}{' '}
-                        the quest leader
-                      </div>
-                      {myTurn && (
-                        <Button
-                          className="gold-button"
-                          disabled={busy || selected.length !== required}
-                          onClick={() =>
-                            void send('propose', { team: selected })
-                          }
-                        >
-                          Propose team · {selected.length}/{required}
-                          <ArrowRight />
-                        </Button>
-                      )}
-                    </>
-                  )}
-                  {room.phase === 'vote' && (
-                    <>
-                      <div className="eyebrow">THE TABLE DECIDES</div>
-                      <h2>Does this team have your trust?</h2>
-                      <p>
-                        {room.team.map(playerName).join(', ')} will undertake
-                        the quest. A strict majority must approve; a tie rejects
-                        the team.
-                      </p>
-                      {room.me.voted ? (
-                        <div className="sealed">
-                          <Check /> Your vote is sealed. Waiting for the table.
-                        </div>
-                      ) : (
-                        <div className="vote-actions">
-                          <Button
-                            className="success-button"
-                            disabled={busy}
-                            onClick={() => void send('vote', { approve: true })}
-                          >
-                            <Shield />
-                            Approve
-                          </Button>
-                          <Button
-                            className="danger-button"
-                            disabled={busy}
-                            onClick={() =>
-                              void send('vote', { approve: false })
+                      <button
+                        className="role-portrait-button"
+                        onClick={showIdentity}
+                        aria-label="Your character details"
+                      >
+                        <Portrait role={room.me.role} />
+                      </button>
+                      <div className="role-strip-content">
+                        <div className="role-strip-heading">
+                          <h2>{ROLES[room.me.role].name}</h2>
+                          <span
+                            className={ROLES[room.me.role].side}
+                            aria-label={
+                              ROLES[room.me.role].side === 'good'
+                                ? 'Good'
+                                : 'Evil'
                             }
                           >
-                            <X />
-                            Reject
-                          </Button>
+                            {ROLES[room.me.role].side === 'good' ? (
+                              <Shield />
+                            ) : (
+                              <Swords />
+                            )}
+                          </span>
                         </div>
-                      )}
-                      <span className="action-hint">
-                        {room.submitted}/{room.players.length} votes sealed.
-                        Votes reveal together.
-                      </span>
+                        <p>{ROLE_HINTS[room.me.role]}</p>
+                        {room.me.knowledge.length > 0 && (
+                          <div className="known-players">
+                            <span>
+                              {room.me.role === 'Percival'
+                                ? 'Possible Merlin'
+                                : 'Known evil'}
+                            </span>
+                            {room.me.knowledge.map((k) => (
+                              <span className="known-player" key={k.id}>
+                                {playerName(k.id)}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        className="icon-button"
+                        aria-label="Hide role and knowledge"
+                        title="Hide role"
+                        onClick={() => setRoleHidden(true)}
+                      >
+                        <EyeOff />
+                      </button>
                     </>
                   )}
-                  {room.phase === 'quest' && (
-                    <>
-                      <div className="eyebrow">
-                        QUEST {room.round + 1} · A TEST OF LOYALTY
+                </section>
+              )}
+              <div className="play-layout">
+                <div className="play-main">
+                  <GameTable
+                    room={room}
+                    selected={
+                      room.phase === 'team'
+                        ? selected
+                        : room.phase === 'assassinate'
+                          ? target
+                            ? [target]
+                            : []
+                          : room.team
+                    }
+                    eligible={
+                      busy
+                        ? []
+                        : room.players
+                            .filter((p) =>
+                              room.phase === 'team'
+                                ? myTurn &&
+                                  (selected.includes(p.id) ||
+                                    selected.length < required)
+                                : room.phase === 'assassinate' &&
+                                  room.me.role === 'Assassin' &&
+                                  p.id !== me?.id &&
+                                  !room.me.knowledge.some((k) => k.id === p.id),
+                            )
+                            .map((p) => p.id)
+                    }
+                    onSelect={
+                      room.phase === 'team' && myTurn
+                        ? togglePlayer
+                        : room.phase === 'assassinate' &&
+                            room.me.role === 'Assassin'
+                          ? setTarget
+                          : undefined
+                    }
+                  >
+                    <section
+                      className="quest-board panel"
+                      aria-label="Quest board"
+                    >
+                      <div className="quest-track">
+                        {room.teamSizes.map((size, i) => {
+                          const q = room.quests[i];
+                          return (
+                            <div
+                              className={`quest-stop ${q ? (q.success ? 'success' : 'failed') : i === room.round ? 'current' : ''}`}
+                              key={i}
+                              aria-label={`Quest ${i + 1}, ${size} players${q ? (q.success ? ', succeeded' : ', failed') : i === room.round ? ', current' : ''}`}
+                            >
+                              <div className="quest-medallion">
+                                {q ? (
+                                  q.success ? (
+                                    <Shield />
+                                  ) : (
+                                    <Swords />
+                                  )
+                                ) : (
+                                  <span>
+                                    {['I', 'II', 'III', 'IV', 'V'][i]}
+                                  </span>
+                                )}
+                              </div>
+                              <span aria-label={`${size} players`}>
+                                <Users />
+                                {size}
+                              </span>
+                              {i === 3 && room.players.length >= 7 && (
+                                <small title="Two Fail cards required">
+                                  <Swords />
+                                  ×2
+                                  <span className="sr-only">
+                                    fails required
+                                  </span>
+                                </small>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                      <h2>The kingdom is counting on you.</h2>
-                      <p>
-                        {room.round === 3 && room.players.length >= 7
-                          ? 'This quest requires two Fail cards to fail.'
-                          : 'A single Fail card will doom this quest.'}{' '}
-                        Quest cards remain anonymous.
-                      </p>
-                      {room.team.includes(me!.id) ? (
-                        room.me.quested ? (
-                          <div className="sealed">
-                            <Check /> Your card is sealed.
-                          </div>
+                      <div className="rejection-track">
+                        <span>Rejections</span>
+                        <div
+                          aria-label={`${room.rejections} of 5 rejected teams`}
+                        >
+                          {[0, 1, 2, 3, 4].map((i) => (
+                            <i
+                              key={i}
+                              className={i < room.rejections ? 'filled' : ''}
+                            />
+                          ))}
+                        </div>
+                        <button
+                          className="icon-button"
+                          aria-label="Explain rejection rules"
+                          onClick={() => setModal('rules')}
+                        >
+                          <CircleHelp />
+                        </button>
+                        {room.rejections === 4 && (
+                          <p className="evil">Next rejection: evil wins</p>
+                        )}
+                      </div>
+                    </section>
+                  </GameTable>
+                  <section
+                    className={`panel action-panel phase-${room.phase}`}
+                    aria-label="Current action"
+                  >
+                    {room.phase === 'reveal' && (
+                      <>
+                        <div className="phase-icon">
+                          <Eye />
+                        </div>
+                        <h2>
+                          {me?.ready
+                            ? 'Waiting for players'
+                            : 'Your role is ready'}
+                        </h2>
+                        {!me?.ready && (
+                          <Button
+                            className="gold-button"
+                            onClick={showIdentity}
+                          >
+                            Reveal
+                            <Eye />
+                          </Button>
+                        )}
+                        <Progress
+                          count={room.submitted}
+                          total={room.players.length}
+                          label="roles confirmed"
+                        />
+                      </>
+                    )}
+                    {room.phase === 'team' && (
+                      <>
+                        <div className="action-heading">
+                          <h2>
+                            {myTurn
+                              ? `Tap ${required} pawns`
+                              : 'Choosing a team'}
+                          </h2>
+                          <span className="leader-label">
+                            <Crown />
+                            {myTurn ? 'You' : leader?.name}
+                          </span>
+                        </div>
+                        {myTurn && (
+                          <Button
+                            className="gold-button"
+                            disabled={busy || selected.length !== required}
+                            onClick={() =>
+                              void send('propose', { team: selected })
+                            }
+                          >
+                            Propose{' '}
+                            <span>
+                              {selected.length}/{required}
+                            </span>
+                            <ArrowRight />
+                          </Button>
+                        )}
+                      </>
+                    )}
+                    {room.phase === 'vote' && (
+                      <>
+                        <h2>
+                          {room.me.voted ? 'Vote sealed' : 'Approve team?'}
+                        </h2>
+                        {room.me.voted ? (
+                          <Check
+                            className="sealed-icon good"
+                            aria-label="Vote submitted"
+                          />
                         ) : (
+                          <div className="vote-actions">
+                            <Button
+                              className="success-button"
+                              disabled={busy}
+                              onClick={() =>
+                                void send('vote', { approve: true })
+                              }
+                            >
+                              <Check />
+                              Approve
+                            </Button>
+                            <Button
+                              className="danger-button"
+                              disabled={busy}
+                              onClick={() =>
+                                void send('vote', { approve: false })
+                              }
+                            >
+                              <X />
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                        <Progress
+                          count={room.submitted}
+                          total={room.players.length}
+                          label="votes sealed"
+                        />
+                      </>
+                    )}
+                    {room.phase === 'quest' && (
+                      <>
+                        <h2>
+                          {room.me.quested
+                            ? 'Card sealed'
+                            : room.team.includes(me!.id)
+                              ? 'Play your card'
+                              : 'Quest in progress'}
+                        </h2>
+                        {room.round === 3 && room.players.length >= 7 && (
+                          <span className="quest-warning">
+                            <Swords />2 fails required
+                          </span>
+                        )}
+                        {room.team.includes(me!.id) && !room.me.quested ? (
                           <div className="vote-actions">
                             <Button
                               className="success-button"
@@ -988,306 +1040,202 @@ export default function Home() {
                                 </Button>
                               )}
                           </div>
-                        )
-                      ) : (
-                        <div className="sealed">
-                          <Clock3 /> The quest party is making its choice.
-                        </div>
-                      )}
-                      <span className="action-hint">
-                        {room.submitted}/{room.team.length} quest cards sealed.
-                      </span>
-                    </>
-                  )}
-                  {room.phase === 'result' && (
-                    <>
-                      <div
-                        className={`phase-icon ${room.quests.at(-1)?.success ? 'good' : 'evil'}`}
-                      >
-                        {room.quests.at(-1)?.success ? <Shield /> : <Swords />}
-                      </div>
-                      <div className="eyebrow">
-                        QUEST {room.round + 1} · THE CARDS ARE REVEALED
-                      </div>
-                      <h2>
-                        {room.quests.at(-1)?.success
-                          ? 'A light in the darkness.'
-                          : 'Betrayal on the road.'}
-                      </h2>
-                      <p>
-                        The quest{' '}
-                        {room.quests.at(-1)?.success ? 'succeeded' : 'failed'}.{' '}
-                        {room.quests.at(-1)?.fails} Fail{' '}
-                        {room.quests.at(-1)?.fails === 1
-                          ? 'card was'
-                          : 'cards were'}{' '}
-                        played.
-                      </p>
-                      <div className="result-cards">
-                        {Array.from(
-                          { length: room.quests.at(-1)!.team.length },
-                          (_, i) => {
-                            const fail = i < room.quests.at(-1)!.fails;
-                            return (
-                              <div
-                                key={i}
-                                className={fail ? 'fail-card' : 'success-card'}
-                              >
-                                {fail ? <Swords /> : <Shield />}
-                                <span>{fail ? 'Fail' : 'Success'}</span>
-                              </div>
-                            );
-                          },
+                        ) : room.me.quested ? (
+                          <Check
+                            className="sealed-icon good"
+                            aria-label="Card submitted"
+                          />
+                        ) : (
+                          <Clock3
+                            className="sealed-icon"
+                            aria-label="Waiting for quest party"
+                          />
                         )}
-                      </div>
-                      <Button
-                        className="gold-button"
-                        disabled={busy || me?.ready}
-                        onClick={() => void send('ready')}
-                      >
-                        {me?.ready ? 'Waiting for the table…' : 'Continue'}
-                        <ArrowRight />
-                      </Button>
-                      <span className="action-hint">
-                        {room.submitted}/{room.players.length} players are ready
-                        to continue.
-                      </span>
-                    </>
-                  )}
-                  {room.phase === 'assassinate' && (
-                    <>
-                      <div className="phase-icon evil">
-                        <Swords />
-                      </div>
-                      <div className="eyebrow">EVIL’S LAST CHANCE</div>
-                      <h2>One name. One final blade.</h2>
-                      <p>
-                        Three quests have succeeded. The Assassin can still win
-                        for evil by identifying Merlin.
-                      </p>
-                      {room.me.role === 'Assassin' ? (
-                        <>
-                          <label htmlFor="target">WHO IS MERLIN?</label>
-                          <select
-                            id="target"
-                            value={target}
-                            onChange={(e) => setTarget(e.target.value)}
-                          >
-                            <option value="">Choose your target…</option>
-                            {room.players
-                              .filter(
-                                (p) =>
-                                  p.id !== me?.id &&
-                                  !room.me.knowledge.some((k) => k.id === p.id),
-                              )
-                              .map((p) => (
-                                <option key={p.id} value={p.id}>
-                                  {p.name}
-                                </option>
-                              ))}
-                          </select>
-                          <Button
-                            className="danger-button assassinate"
-                            disabled={busy || !target}
-                            onClick={() => void send('assassinate', { target })}
-                          >
-                            <Swords />
-                            Assassinate {target ? playerName(target) : 'Merlin'}
-                          </Button>
-                        </>
-                      ) : (
-                        <div className="sealed">
-                          <Clock3 /> The Assassin is making the final choice.
+                        <Progress
+                          count={room.submitted}
+                          total={room.team.length}
+                          label="quest cards sealed"
+                        />
+                      </>
+                    )}
+                    {room.phase === 'result' && (
+                      <>
+                        <h2
+                          className={
+                            room.quests.at(-1)?.success ? 'good' : 'evil'
+                          }
+                        >
+                          {room.quests.at(-1)?.success
+                            ? 'Quest succeeded'
+                            : 'Quest failed'}
+                        </h2>
+                        <div
+                          className="result-cards"
+                          aria-label={`${room.quests.at(-1)!.fails} Fail cards`}
+                        >
+                          {Array.from(
+                            { length: room.quests.at(-1)!.team.length },
+                            (_, i) => {
+                              const fail = i < room.quests.at(-1)!.fails;
+                              return (
+                                <div
+                                  key={i}
+                                  className={
+                                    fail ? 'fail-card' : 'success-card'
+                                  }
+                                  aria-label={fail ? 'Fail' : 'Success'}
+                                >
+                                  {fail ? <Swords /> : <Shield />}
+                                </div>
+                              );
+                            },
+                          )}
                         </div>
-                      )}
-                    </>
-                  )}
-                  {room.phase === 'finished' && (
-                    <>
-                      <div className={`phase-icon ${room.winner}`}>
-                        <Crown />
-                      </div>
-                      <div className="eyebrow">
-                        {room.winner === 'good'
-                          ? 'THE LIGHT ENDURES'
-                          : 'DARKNESS TAKES THE THRONE'}
-                      </div>
-                      <h2>
-                        {room.winner === 'good'
-                          ? 'Camelot is saved.'
-                          : 'The kingdom has fallen.'}
-                      </h2>
-                      <p>{room.reason}</p>
-                      <div className="ending-roles">
-                        {room.players.map((p) => (
-                          <div key={p.id}>
-                            <Portrait role={p.role!} />
-                            <strong>{p.name}</strong>
-                            <span className={ROLES[p.role!].side}>
-                              {ROLES[p.role!].name}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      {host ? (
                         <Button
                           className="gold-button"
-                          disabled={busy}
-                          onClick={() => void send('rematch')}
+                          disabled={busy || me?.ready}
+                          onClick={() => void send('ready')}
                         >
-                          Gather for another game <ArrowRight />
+                          {me?.ready ? 'Waiting…' : 'Continue'}
+                          {me?.ready ? <Clock3 /> : <ArrowRight />}
                         </Button>
-                      ) : (
-                        <span className="action-hint">
-                          The host can start a new game.
-                        </span>
-                      )}
-                    </>
-                  )}
-                </section>
-                <section className="players-panel">
-                  <div className="players-heading">
-                    <h3>The round table</h3>
-                    <span>
-                      {room.players.length} players ·{' '}
-                      {room.phase === 'team' && myTurn
-                        ? 'Choose your quest party'
-                        : 'Keep your friends close'}
-                    </span>
-                  </div>
-                  <div className="player-chips">
-                    {room.players.map((p) => (
-                      <button
-                        key={p.id}
-                        className={`player-chip ${selected.includes(p.id) ? 'selected' : ''} ${room.team.includes(p.id) && room.phase !== 'team' ? 'on-quest' : ''}`}
-                        disabled={
-                          room.phase !== 'team' ||
-                          !myTurn ||
-                          busy ||
-                          (!selected.includes(p.id) &&
-                            selected.length >= required)
-                        }
-                        aria-pressed={selected.includes(p.id)}
-                        onClick={() => togglePlayer(p.id)}
-                      >
-                        <Avatar n={p.avatar} />
-                        <span>
-                          <strong>
-                            {p.name}
-                            {p.id === me?.id && <small> YOU</small>}
-                          </strong>
-                          <small>
-                            {p.id === room.leader
-                              ? 'Quest leader'
-                              : !p.online
-                                ? 'Reconnecting'
-                                : p.bot
-                                  ? 'Computer'
-                                  : 'At the table'}
-                          </small>
-                        </span>
-                        {p.id === room.leader && (
-                          <Crown className="leader-crown" />
-                        )}
-                        {selected.includes(p.id) && (
-                          <Check className="selection-check" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-              </div>
-              <aside className="game-sidebar">
-                <section className="identity-panel panel">
-                  <div className="eyebrow">FOR YOUR EYES ONLY</div>
-                  <div className="card-back">
-                    <Crown />
-                    <span>A V A L O N</span>
-                    <i />
-                    <Shield />
-                  </div>
-                  <h3>Your secret identity</h3>
-                  <p>Some knowledge is best kept close.</p>
-                  <Button className="outline-button" onClick={showIdentity}>
-                    <Eye />
-                    View my character
-                  </Button>
-                </section>
-                <section className="panel chronicle">
-                  <div className="entry-tabs">
-                    <button
-                      className={historyTab === 'events' ? 'active' : ''}
-                      onClick={() => setHistoryTab('events')}
-                    >
-                      Chronicle
-                    </button>
-                    <button
-                      className={historyTab === 'votes' ? 'active' : ''}
-                      onClick={() => setHistoryTab('votes')}
-                    >
-                      Vote history
-                    </button>
-                  </div>
-                  {historyTab === 'events' ? (
-                    <ol>
-                      {[...room.log].reverse().map((event, i) => (
-                        <li key={i}>
-                          <span />
-                          {event}
-                        </li>
-                      ))}
-                    </ol>
-                  ) : room.history.length ? (
-                    <div className="vote-history">
-                      {[...room.history].reverse().map((h, i) => (
-                        <div key={i}>
-                          <strong>
-                            Quest {h.quest + 1}{' '}
-                            <span className={h.approved ? 'good' : 'evil'}>
-                              {h.approved ? 'Approved' : 'Rejected'}
-                            </span>
-                          </strong>
-                          <p>{h.team.map(playerName).join(', ')}</p>
-                          <div>
-                            {room.players.map((p) => (
-                              <span
-                                key={p.id}
-                                className={h.votes[p.id] ? 'good' : 'evil'}
-                              >
-                                {h.votes[p.id] ? <Check /> : <X />}
-                                {p.name}
-                              </span>
-                            ))}
-                          </div>
+                        <Progress
+                          count={room.submitted}
+                          total={room.players.length}
+                          label="players ready"
+                        />
+                      </>
+                    )}
+                    {room.phase === 'assassinate' && (
+                      <>
+                        <div className="phase-icon evil">
+                          <Swords />
                         </div>
-                      ))}
+                        <h2>
+                          {room.me.role === 'Assassin'
+                            ? 'Who is Merlin?'
+                            : 'The Assassin is choosing'}
+                        </h2>
+                        {room.me.role === 'Assassin' && (
+                          <>
+                            <p className="target-name">
+                              {target ? playerName(target) : 'Tap a pawn'}
+                            </p>
+                            <Button
+                              className="danger-button assassinate"
+                              disabled={busy || !target}
+                              onClick={() =>
+                                void send('assassinate', { target })
+                              }
+                            >
+                              <Swords />
+                              Assassinate
+                            </Button>
+                          </>
+                        )}
+                      </>
+                    )}
+                    {room.phase === 'finished' && (
+                      <>
+                        <div className={`phase-icon ${room.winner}`}>
+                          <Crown />
+                        </div>
+                        <h2>
+                          {room.winner === 'good' ? 'Good wins' : 'Evil wins'}
+                        </h2>
+                        <p>{room.reason}</p>
+                        <div className="ending-roles">
+                          {room.players.map((p) => (
+                            <div key={p.id}>
+                              <Portrait role={p.role!} />
+                              <strong>{p.name}</strong>
+                              <span className={ROLES[p.role!].side}>
+                                {ROLES[p.role!].name}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        {host && (
+                          <Button
+                            className="gold-button"
+                            disabled={busy}
+                            onClick={() => void send('rematch')}
+                          >
+                            Play again
+                            <ArrowRight />
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </section>
+                </div>
+                <aside className="game-sidebar">
+                  <details className="panel chronicle">
+                    <summary>
+                      <History />
+                      History
+                      <ChevronRight />
+                    </summary>
+                    <div className="history-content">
+                      <div className="entry-tabs">
+                        <button
+                          className={historyTab === 'events' ? 'active' : ''}
+                          onClick={() => setHistoryTab('events')}
+                        >
+                          Events
+                        </button>
+                        <button
+                          className={historyTab === 'votes' ? 'active' : ''}
+                          onClick={() => setHistoryTab('votes')}
+                        >
+                          Votes
+                        </button>
+                      </div>
+                      {historyTab === 'events' ? (
+                        <ol>
+                          {[...room.log].reverse().map((event, i) => (
+                            <li key={i}>
+                              <span />
+                              {event}
+                            </li>
+                          ))}
+                        </ol>
+                      ) : room.history.length ? (
+                        <div className="vote-history">
+                          {[...room.history].reverse().map((h, i) => (
+                            <div key={i}>
+                              <strong>
+                                Quest {h.quest + 1}
+                                <span className={h.approved ? 'good' : 'evil'}>
+                                  {h.approved ? 'Approved' : 'Rejected'}
+                                </span>
+                              </strong>
+                              <p>{h.team.map(playerName).join(', ')}</p>
+                              <div>
+                                {room.players.map((p) => (
+                                  <span
+                                    key={p.id}
+                                    className={h.votes[p.id] ? 'good' : 'evil'}
+                                  >
+                                    {h.votes[p.id] ? <Check /> : <X />}
+                                    {p.name}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="empty-history">No votes yet</p>
+                      )}
                     </div>
-                  ) : (
-                    <p className="empty-history">
-                      Completed team votes will appear here.
-                    </p>
-                  )}
-                </section>
-                <button
-                  className="rules-link"
-                  onClick={() => setModal('rules')}
-                >
-                  <BookOpen /> Need a reminder? Read the rules <ChevronRight />
-                </button>
-              </aside>
-            </div>
+                  </details>
+                </aside>
+              </div>
+            </>
           )}
         </section>
       )}
-      <footer>
-        <span>
-          <Swords /> Built for friends. Made for betrayal.
-        </span>
-        <button onClick={() => setModal('rules')}>
-          <BookOpen /> A quick guide to Avalon
-        </button>
-        <span>An unofficial fan-made adaptation.</span>
-      </footer>
       <Dialog
         open={modal !== null}
         onOpenChange={(open) => {
@@ -1299,7 +1247,7 @@ export default function Home() {
         >
           {modal === 'rules' && (
             <>
-              <DialogTitle>The art of hidden loyalties.</DialogTitle>
+              <DialogTitle>How to play</DialogTitle>
               <DialogDescription>
                 Avalon in a few minutes. The game handles the rules; you handle
                 the trust.
@@ -1355,9 +1303,9 @@ export default function Home() {
           )}
           {modal === 'characters' && (
             <>
-              <DialogTitle>The faces of Avalon</DialogTitle>
+              <DialogTitle>Characters</DialogTitle>
               <DialogDescription>
-                Eight characters. Two allegiances. Countless secrets.
+                Tap a character to learn more.
               </DialogDescription>
               <div className="character-browser">
                 <div className="character-list">
@@ -1399,14 +1347,10 @@ export default function Home() {
           {modal === 'identity' && room?.me.role && (
             <>
               <DialogTitle>
-                {revealed
-                  ? ROLES[room.me.role].name
-                  : 'A secret, entrusted to you.'}
+                {revealed ? ROLES[room.me.role].name : 'Your character'}
               </DialogTitle>
               <DialogDescription>
-                {revealed
-                  ? 'Keep this knowledge away from other players.'
-                  : 'Make sure only you can see this screen.'}
+                {revealed ? 'For your eyes only.' : 'Keep your screen private.'}
               </DialogDescription>
               {revealed ? (
                 <div className="private-reveal">
@@ -1441,14 +1385,17 @@ export default function Home() {
                       disabled={busy}
                       onClick={async () => {
                         const r = await send('ready');
-                        if (r) closeModal();
+                        if (r) {
+                          setRoleHidden(false);
+                          closeModal();
+                        }
                       }}
                     >
-                      I know my role. Hide it. <EyeOff />
+                      Ready <EyeOff />
                     </Button>
                   ) : (
                     <Button className="outline-button" onClick={closeModal}>
-                      Hide my identity <EyeOff />
+                      Close <EyeOff />
                     </Button>
                   )}
                 </div>
@@ -1464,7 +1411,7 @@ export default function Home() {
                     className="gold-button"
                     onClick={() => setRevealed(true)}
                   >
-                    Only I can see this screen <Eye />
+                    Reveal <Eye />
                   </Button>
                 </>
               )}

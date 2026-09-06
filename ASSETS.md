@@ -25,4 +25,19 @@ The portrait sheet uses equal cells with no gutters. Reading left to right:
 7. Oberon — wild fae, antler crown.
 8. Minion of Mordred — scarred, armored warrior.
 
-The frontend displays each cell by clipping and positioning the shared image with CSS. Public player avatars use neutral Lucide symbols and have no relationship to secret roles. Lucide icons use the library's ISC license. UI ornaments and the crown favicon are simple vector geometry.
+The frontend displays each cell by clipping and positioning the shared image with CSS. Public player pawns use neutral Lucide symbols and have no relationship to secret roles. Lucide icons use the library's ISC license. UI ornaments and the crown favicon are simple vector geometry.
+
+## Tabletop update — September 6, 2026
+
+- `public/art/tabletop.png`: original overhead walnut table, teal felt and brass rim; used behind the tappable player pawns in every lobby and game phase.
+- `public/art/quest-cards.png`: two original chalice illustrations in equal horizontal cells; left Success, right Fail. Used for playable quest cards and revealed results.
+
+Generated with the built-in OpenAI image tool, without subagents. Both outputs were visually inspected. These are newly generated assets, not extractions from the reference rulebook. Existing portrait art is preserved. Public pawn colors depend only on seat order, never secret allegiance. Leader and team coins, vote symbols and pawns use the existing Lucide icon library with CSS material treatments. Labels remain accessible HTML.
+
+### Tabletop generation prompt
+
+Use case: stylized-concept. Asset type: background for a playable mobile medieval board game. Create an original luxurious physical tabletop surface viewed perfectly straight overhead, portrait 1024x1536 composition. Dark warm walnut table fills edges; centered tall oval muted deep teal woven felt playmat takes 92 percent width and 94 percent height, fine aged brass double rim with subtle original ornamental flourishes only at top and bottom, soft natural shadows, tactile fibers and wood grain, warm subdued lighting. Entire interior is empty negative space, uniformly dark and calm for legible interactive game pieces overlaid in code. No cards, no coins, no pawns, no words, no letters, no numbers, no logos. Sophisticated realistic board-game product photography, not busy fantasy illustration. Original materials and ornament, do not copy any published board game.
+
+### Quest card generation prompt
+
+Use case: stylized-concept. Asset type: original digital board-game quest card illustration atlas. Landscape canvas exactly two equally sized portrait illustrations side by side, no gutter, each image fills its half to the edges. LEFT HALF: a beautiful upright antique gold chalice with moonlit clear water, elegant original knotwork, dark muted teal aged parchment background, hopeful soft light. RIGHT HALF: a different cracked tarnished chalice tipped slightly with dark red wine spilling, restrained ominous crimson and charcoal aged parchment background. Both objects centered in their half, occupy central 65 percent height and 60 percent width; generous quiet edges for HTML card border and label overlay. Hand-painted premium Arthurian fantasy board-game art, tactile aged ink and gold leaf, realistic and subtle, coherent restrained palette, strong readable silhouette at small size. No text, no letters, no numbers, no logos, no watermark, no external drop shadow, no copied artwork or published game designs.
