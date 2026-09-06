@@ -41,3 +41,12 @@ Use case: stylized-concept. Asset type: background for a playable mobile medieva
 ### Quest card generation prompt
 
 Use case: stylized-concept. Asset type: original digital board-game quest card illustration atlas. Landscape canvas exactly two equally sized portrait illustrations side by side, no gutter, each image fills its half to the edges. LEFT HALF: a beautiful upright antique gold chalice with moonlit clear water, elegant original knotwork, dark muted teal aged parchment background, hopeful soft light. RIGHT HALF: a different cracked tarnished chalice tipped slightly with dark red wine spilling, restrained ominous crimson and charcoal aged parchment background. Both objects centered in their half, occupy central 65 percent height and 60 percent width; generous quiet edges for HTML card border and label overlay. Hand-painted premium Arthurian fantasy board-game art, tactile aged ink and gold leaf, realistic and subtle, coherent restrained palette, strong readable silhouette at small size. No text, no letters, no numbers, no logos, no watermark, no external drop shadow, no copied artwork or published game designs.
+
+## PWA icon set — September 6, 2026
+
+- `public/icons/icon-192.png`: 192 × 192 install icon.
+- `public/icons/icon-512.png`: 512 × 512 install icon.
+- `public/icons/icon-maskable-512.png`: 512 × 512 maskable Android launcher icon with extra safe-zone padding.
+- `public/icons/apple-touch-icon.png`: 180 × 180 iOS home-screen icon.
+
+These PNGs are programmatically rendered derivatives of the repository's existing original crown favicon geometry and teal/gold palette. They add no third-party artwork and are used only for operating-system launcher/install surfaces.
