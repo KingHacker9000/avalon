@@ -10,9 +10,15 @@ import {
   addPracticePlayers,
   botStep,
   joinRoom,
+  tick,
+  recoverOfflineHost,
+  recoverOfflineLeader,
+  ACTIVE_RECOVERY_GRACE_MS,
+  ONLINE_WINDOW_MS,
   type Room,
 } from '../lib/game/engine.ts';
 import { ROLES, TEAM_SIZES, EVIL_COUNT, type Role } from '../lib/game/roles.ts';
+
 function fixture(n = 5): Room {
   const p = makePlayer('Player 1', 'secret1');
   const r = createRoom('ABC234', p);
@@ -21,12 +27,14 @@ function fixture(n = 5): Room {
     r.players.push(makePlayer(`Player ${i + 1}`, `secret${i + 1}`));
   return r;
 }
+
 function start(r: Room) {
   r.players.forEach((p) => act(r, p.id, 'ready'));
   act(r, r.host, 'start');
   r.players.forEach((p) => act(r, p.id, 'ready'));
   return r;
 }
+
 function proposal(
   r: Room,
   team = r.players
@@ -35,9 +43,20 @@ function proposal(
 ) {
   act(r, r.players[r.leader].id, 'propose', { team });
 }
+
+function expireTimedPhase(r: Room) {
+  assert.ok(r.phaseEndsAt, `expected ${r.phase} to have a deadline`);
+  const changed = tick(r, r.phaseEndsAt + 1);
+  assert.equal(changed, true);
+}
+
 function approve(r: Room) {
   for (const p of r.players) act(r, p.id, 'vote', { approve: true });
+  assert.equal(r.phase, 'vote-result');
+  expireTimedPhase(r);
+  assert.equal(r.phase, 'quest');
 }
+
 function quest(r: Room, fails = 0) {
   proposal(r);
   approve(r);
@@ -45,9 +64,12 @@ function quest(r: Room, fails = 0) {
     if (i < fails) r.players.find((p) => p.id === id)!.role = 'Minion';
     act(r, id, 'quest', { success: i >= fails });
   });
+  assert.equal(r.phase, 'result');
 }
+
 function continueResult(r: Room) {
-  r.players.forEach((p) => act(r, p.id, 'ready'));
+  assert.equal(r.phase, 'result');
+  expireTimedPhase(r);
 }
 
 void test('every player count has the correct allegiance split and five quests', () => {
@@ -63,20 +85,23 @@ void test('every player count has the correct allegiance split and five quests',
     assert.equal(deck.filter((r) => r === 'Assassin').length, 1);
   }
 });
+
 void test('invalid and overfilled role sets are rejected', () => {
   assert.throws(() => deckFor(5, ['Morgana', 'Mordred']), /Too many/);
   assert.throws(() => deckFor(5, ['Morgana', 'Morgana']), /Invalid/);
   assert.throws(() => deckFor(5, ['Fake' as Role]), /Invalid/);
   assert.throws(() => deckFor(4, []), /5–10/);
 });
-void test('non-hosts cannot configure, start, remove, or rematch', () => {
+
+void test('non-hosts cannot configure, start, remove, rematch, or restart a round', () => {
   const r = fixture();
-  for (const action of ['configure', 'start', 'remove', 'rematch'])
+  for (const action of ['configure', 'start', 'remove', 'rematch', 'restart-round'])
     assert.throws(
       () => act(r, r.players[1].id, action, { capacity: 5, optional: [] }),
       /Only the host/,
     );
 });
+
 void test('room names, capacity and midgame joins are validated', () => {
   assert.throws(() => makePlayer('', 'x'));
   assert.throws(() => makePlayer('a'.repeat(21), 'x'));
@@ -85,12 +110,14 @@ void test('room names, capacity and midgame joins are validated', () => {
   start(r);
   assert.throws(() => joinRoom(r, makePlayer('Late', 'x')), /already started/);
 });
+
 void test('start requires five players and all players ready', () => {
   const r = fixture();
   assert.throws(() => act(r, r.host, 'start'), /everyone/);
   r.players = r.players.slice(0, 4);
   assert.throws(() => act(r, r.host, 'start'), /5 players/);
 });
+
 void test('roles are hidden publicly but available privately after dealing', () => {
   const r = start(fixture());
   const view = publicView(r, r.players[0].id);
@@ -100,6 +127,7 @@ void test('roles are hidden publicly but available privately after dealing', () 
   assert.ok(!('cards' in view));
   assert.ok(!('votes' in view));
 });
+
 void test('Merlin cannot see Mordred but can see Oberon', () => {
   const r = fixture(7);
   const roles: Role[] = [
@@ -117,6 +145,7 @@ void test('Merlin cannot see Mordred but can see Oberon', () => {
     [4, 5, 6].map((i) => r.players[i].id),
   );
 });
+
 void test('Percival sees Merlin and Morgana identically; evil does not see Oberon', () => {
   const r = fixture(7);
   const roles: Role[] = [
@@ -140,6 +169,7 @@ void test('Percival sees Merlin and Morgana identically; evil does not see Obero
   );
   assert.deepEqual(knowledge(r, r.players[2]), []);
 });
+
 void test('proposals must come from leader and contain exact unique valid players', () => {
   const r = start(fixture());
   assert.throws(
@@ -153,7 +183,8 @@ void test('proposals must come from leader and contain exact unique valid player
   );
   assert.throws(() => proposal(r, ['x', 'y']), /distinct/);
 });
-void test('votes are sealed, immutable, and reveal only after all players vote', () => {
+
+void test('votes stay private while pending, then get a timed public reveal', () => {
   const r = start(fixture());
   proposal(r);
   act(r, r.players[0].id, 'vote', { approve: true });
@@ -168,35 +199,52 @@ void test('votes are sealed, immutable, and reveal only after all players vote',
   );
   for (const p of r.players.slice(1)) act(r, p.id, 'vote', { approve: true });
   assert.equal(r.history.length, 1);
-  assert.equal(r.phase, 'quest');
+  assert.equal(r.phase, 'vote-result');
+  assert.ok(r.phaseEndsAt);
   assert.equal(r.history[0].votes[r.players[0].id], true);
+  assert.equal(publicView(r, r.host).history[0].votes[r.players[0].id], true);
+  expireTimedPhase(r);
+  assert.equal(r.phase, 'quest');
 });
-void test('a tie rejects the team and rotates leadership', () => {
+
+void test('a tie reveals as rejected before leadership rotates', () => {
   const r = start(fixture(6));
   const old = r.leader;
   proposal(r);
   r.players.forEach((p, i) => act(r, p.id, 'vote', { approve: i < 3 }));
-  assert.equal(r.phase, 'team');
+  assert.equal(r.phase, 'vote-result');
   assert.equal(r.rejections, 1);
+  assert.equal(r.leader, old);
+  expireTimedPhase(r);
+  assert.equal(r.phase, 'team');
   assert.equal(r.leader, (old + 1) % 6);
 });
-void test('five consecutive rejected teams give evil victory', () => {
+
+void test('five consecutive rejected teams reveal the fifth vote before evil wins', () => {
   const r = start(fixture());
   for (let i = 0; i < 5; i++) {
     proposal(r);
     r.players.forEach((p) => act(r, p.id, 'vote', { approve: false }));
+    assert.equal(r.phase, 'vote-result');
+    expireTimedPhase(r);
   }
   assert.equal(r.phase, 'finished');
   assert.equal(r.winner, 'evil');
 });
-void test('approval resets rejection count', () => {
+
+void test('approval resets rejection count before the vote reveal ends', () => {
   const r = start(fixture());
   proposal(r);
   r.players.forEach((p) => act(r, p.id, 'vote', { approve: false }));
+  expireTimedPhase(r);
   proposal(r);
-  approve(r);
+  for (const p of r.players) act(r, p.id, 'vote', { approve: true });
+  assert.equal(r.phase, 'vote-result');
   assert.equal(r.rejections, 0);
+  expireTimedPhase(r);
+  assert.equal(r.phase, 'quest');
 });
+
 void test('only team members submit; good cannot fail; duplicate cards rejected', () => {
   const r = start(fixture());
   proposal(r);
@@ -216,6 +264,7 @@ void test('only team members submit; good cannot fail; duplicate cards rejected'
     /already sealed/,
   );
 });
+
 void test('individual quest choices are never published, even at game end', () => {
   const r = start(fixture());
   quest(r, 1);
@@ -229,7 +278,8 @@ void test('individual quest choices are never published, even at game end', () =
   r.phase = 'finished';
   assert.ok(!('cards' in publicView(r, r.host)));
 });
-void test('fourth quest needs two fails at seven or more, one at six', () => {
+
+void test('fourth quest needs two Betray cards at seven or more, one at six', () => {
   for (const n of [6, 7, 8, 9, 10]) {
     for (const fails of [1, 2]) {
       const r = start(fixture(n));
@@ -239,7 +289,19 @@ void test('fourth quest needs two fails at seven or more, one at six', () => {
     }
   }
 });
-void test('three failed quests finish the game after everyone sees the result', () => {
+
+void test('quest results auto-advance without every player pressing Continue', () => {
+  const r = start(fixture());
+  quest(r, 0);
+  assert.equal(r.phase, 'result');
+  assert.throws(() => act(r, r.host, 'ready'), /nothing to confirm/);
+  const oldRound = r.round;
+  continueResult(r);
+  assert.equal(r.phase, 'team');
+  assert.equal(r.round, oldRound + 1);
+});
+
+void test('three failed quests finish the game after the timed result reveal', () => {
   const r = start(fixture());
   for (let i = 0; i < 3; i++) {
     quest(r, 1);
@@ -249,6 +311,7 @@ void test('three failed quests finish the game after everyone sees the result', 
   assert.equal(r.phase, 'finished');
   assert.equal(r.winner, 'evil');
 });
+
 void test('three successes enter assassination and only the Assassin chooses', () => {
   const r = start(fixture());
   for (let i = 0; i < 3; i++) {
@@ -266,6 +329,7 @@ void test('three successes enter assassination and only the Assassin chooses', (
   assert.equal(r.winner, 'evil');
   assert.ok(publicView(r, r.host).players.every((p) => p.role));
 });
+
 void test('a missed assassination awards good the win, rematch clears secrets', () => {
   const r = start(fixture());
   r.phase = 'assassinate';
@@ -279,6 +343,7 @@ void test('a missed assassination awards good the win, rematch clears secrets', 
   assert.deepEqual(r.quests, []);
   assert.deepEqual(publicView(r, r.host).me.knowledge, []);
 });
+
 void test('lobby host departure transfers host; active seats cannot be lost', () => {
   const r = fixture();
   const next = r.players[1].id;
@@ -287,6 +352,44 @@ void test('lobby host departure transfers host; active seats cannot be lost', ()
   const active = start(fixture());
   assert.throws(() => act(active, active.host, 'leave'), /reserved/);
 });
+
+void test('an offline host transfers to an online human after the grace period', () => {
+  const r = fixture();
+  const now = Date.now();
+  const oldHost = r.players[0];
+  const nextHost = r.players[1];
+  oldHost.seen = now - ACTIVE_RECOVERY_GRACE_MS - 1;
+  nextHost.seen = now;
+  assert.equal(recoverOfflineHost(r, now), true);
+  assert.equal(r.host, nextHost.id);
+  assert.match(r.log.at(-1)!, /became table host/);
+});
+
+void test('an offline leader is skipped only after a long disconnect', () => {
+  const r = start(fixture());
+  const now = Date.now();
+  const oldLeader = r.leader;
+  r.players.forEach((p) => (p.seen = now));
+  r.players[oldLeader].seen = now - ACTIVE_RECOVERY_GRACE_MS - 1;
+  assert.equal(recoverOfflineLeader(r, now), true);
+  assert.notEqual(r.leader, oldLeader);
+  assert.ok(now - r.players[r.leader].seen < ONLINE_WINDOW_MS);
+});
+
+void test('host can restart a stalled active round only after a prolonged disconnect', () => {
+  const r = start(fixture());
+  const stale = r.players.find((p) => p.id !== r.host)!;
+  assert.throws(() => act(r, r.host, 'restart-round'), /after a player/);
+  stale.seen = Date.now() - ACTIVE_RECOVERY_GRACE_MS - 1;
+  assert.equal(publicView(r, r.host).recovery.canRestartRound, true);
+  assert.equal(publicView(r, stale.id).recovery.canRestartRound, false);
+  act(r, r.host, 'restart-round');
+  assert.equal(r.phase, 'lobby');
+  assert.deepEqual(r.quests, []);
+  assert.deepEqual(r.history, []);
+  assert.ok(r.players.every((p) => !p.role));
+});
+
 void test('practice bots advance only their own decisions', () => {
   const r = createRoom('TEST23', makePlayer('You', 'secret'), true);
   addPracticePlayers(r);

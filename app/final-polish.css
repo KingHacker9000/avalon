@@ -1,0 +1,548 @@
+/* Final Game Studio polish pass — September 2026.
+   Loaded last. This layer is intentionally about the social game: reveal public
+   votes, remove digital ceremony, make irreversible actions deliberate, and
+   keep recovery controls exceptional rather than permanent chrome. */
+
+/* ----- Vote semantics: Approve/Reject are strategic, not Good/Evil. ----- */
+
+.clean-ui .phase-vote .success-button,
+.clean-ui .phase-vote .danger-button {
+  border-color: #c3b27a70 !important;
+  background: linear-gradient(145deg, #2a3d3a, #1a2c2d) !important;
+  color: #eee4cc !important;
+  box-shadow:
+    0 4px 0 #0c1715,
+    0 10px 20px #0006,
+    inset 0 0 0 2px #d8c58b16 !important;
+}
+
+.clean-ui .phase-vote .success-button svg {
+  color: #e1c982;
+}
+
+.clean-ui .phase-vote .danger-button {
+  border-color: #9ba6a977 !important;
+  background: linear-gradient(145deg, #303a3d, #1d2a2d) !important;
+}
+
+.clean-ui .phase-vote .danger-button svg {
+  color: #c9d0cf;
+}
+
+.clean-ui .phase-vote .success-button:hover,
+.clean-ui .phase-vote .danger-button:hover {
+  border-color: #e0c87891 !important;
+  background: linear-gradient(145deg, #344a45, #233536) !important;
+}
+
+/* ----- Public vote reveal: this is strategically important information. ----- */
+
+.clean-ui .tabletop:has(.table-vote-reveal) .quest-board {
+  opacity: 0.14;
+  filter: saturate(0.55) brightness(0.72);
+  transform: scale(0.92);
+  transition:
+    opacity 180ms ease,
+    filter 180ms ease,
+    transform 180ms ease;
+}
+
+.clean-ui .table-vote-reveal {
+  position: absolute;
+  z-index: 19;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: min(320px, 65%);
+  max-height: 66%;
+  transform: translate(-50%, -50%);
+  gap: 8px;
+  padding: 12px;
+  overflow: hidden;
+  border: 1px solid #d6bd7d70;
+  border-radius: 14px;
+  background:
+    linear-gradient(155deg, #18312dee, #0c201ef4),
+    radial-gradient(circle at 50% 0%, #e6ca7c18, transparent 55%);
+  box-shadow:
+    0 5px 0 #0a1412,
+    0 20px 38px #000b,
+    inset 0 0 0 2px #e2c98314;
+  backdrop-filter: blur(10px);
+  animation: vote-reveal-arrive 180ms ease-out both;
+}
+
+@keyframes vote-reveal-arrive {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -47%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.clean-ui .vote-reveal-heading {
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.clean-ui .vote-reveal-eyebrow {
+  color: #b6a66f;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.clean-ui .vote-reveal-heading strong {
+  color: #f2ddb0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 20px;
+  line-height: 1.05;
+}
+
+.clean-ui .table-vote-reveal.rejected .vote-reveal-heading strong {
+  color: #decba7;
+}
+
+.clean-ui .vote-reveal-heading small {
+  max-width: 100%;
+  overflow: hidden;
+  color: #a8b7ae;
+  font-size: 8px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clean-ui .vote-reveal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.clean-ui .vote-reveal-grid > span {
+  display: flex;
+  min-width: 0;
+  min-height: 27px;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  border: 1px solid #b7a9783c;
+  border-radius: 7px;
+  background: #0f2421c9;
+  color: #d9dfd3;
+}
+
+.clean-ui .vote-reveal-grid > span.reject {
+  border-color: #91a0a142;
+  background: #172527cf;
+}
+
+.clean-ui .vote-reveal-grid svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  color: #dec47d;
+}
+
+.clean-ui .vote-reveal-grid .reject svg {
+  color: #c2ccca;
+}
+
+.clean-ui .vote-reveal-grid b {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 8px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clean-ui .phase-countdown {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #d2b97135;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: #0b1c1adc;
+  color: #b9c6bc;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.clean-ui .phase-countdown svg {
+  width: 13px;
+  height: 13px;
+  color: #cfb86f;
+}
+
+/* vote-result has its full, public reveal on the table; an empty generic action
+   panel below it would only make the page feel like a dashboard. */
+.clean-ui .action-panel.phase-vote-result {
+  display: none;
+}
+
+/* ----- Proposed team summary: textual backup for dense seats/screen readers. ----- */
+
+.clean-ui .team-summary-bar,
+.clean-ui .auto-transition-bar {
+  display: flex;
+  width: min(620px, calc(100% - 8px));
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  margin: 9px auto 0;
+}
+
+.clean-ui .team-summary-bar {
+  gap: 8px;
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 1px solid #bda86942;
+  border-radius: 10px;
+  background: #102320b8;
+  color: #d7dccd;
+}
+
+.clean-ui .team-summary-bar > svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  color: #d9be73;
+}
+
+.clean-ui .team-summary-bar > span {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.clean-ui .team-summary-bar strong {
+  flex: 0 0 auto;
+  color: #d7c17d;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.clean-ui .team-summary-bar small {
+  min-width: 0;
+  overflow: hidden;
+  color: #b9c6bc;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Quest outcomes no longer require every phone to acknowledge the same public
+   information. The server holds the reveal briefly and advances automatically. */
+.clean-ui .phase-result > .gold-button,
+.clean-ui .phase-result > .submission-progress {
+  display: none !important;
+}
+
+.clean-ui .phase-result {
+  min-height: 0;
+  padding-bottom: 24px;
+}
+
+.clean-ui .auto-transition-bar .phase-countdown {
+  min-width: 150px;
+  box-shadow: 0 6px 18px #0004;
+}
+
+/* ----- Assassination: selection and irreversible confirmation are separate. ----- */
+
+.clean-ui .phase-assassinate .target-name,
+.clean-ui .phase-assassinate .assassinate {
+  display: none !important;
+}
+
+.clean-ui .tabletop:has(.table-assassination-confirm) .quest-board {
+  opacity: 0.2;
+  filter: saturate(0.55) brightness(0.72);
+  transform: scale(0.94);
+}
+
+.clean-ui .table-assassination-confirm {
+  position: absolute;
+  z-index: 19;
+  top: 51%;
+  left: 50%;
+  display: grid;
+  width: min(230px, 56%);
+  transform: translate(-50%, -50%);
+  justify-items: center;
+  gap: 5px;
+  padding: 11px 12px;
+  border: 1px solid #c98a7d70;
+  border-radius: 13px;
+  background: linear-gradient(155deg, #342321ed, #171d1cf2);
+  box-shadow:
+    0 5px 0 #0e1110,
+    0 18px 34px #000a,
+    inset 0 0 0 2px #e29a8815;
+  text-align: center;
+}
+
+.clean-ui .table-assassination-confirm > span {
+  color: #b7a69c;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.clean-ui .table-assassination-confirm > strong {
+  max-width: 100%;
+  overflow: hidden;
+  color: #f0d7cb;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clean-ui .table-assassination-confirm > button {
+  display: inline-flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 3px;
+  border: 1px solid #cf82766b;
+  border-radius: 9px;
+  background: linear-gradient(145deg, #6a3432, #462726);
+  color: #f4d4c9;
+  box-shadow: 0 4px 0 #1b1110;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.clean-ui .table-assassination-confirm > button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.clean-ui .table-assassination-confirm > small {
+  color: #a99d95;
+  font-size: 8px;
+  line-height: 1.2;
+}
+
+.clean-ui .table-assassination-confirm > small.error {
+  color: var(--evil);
+}
+
+/* ----- Exceptional recovery: only appears after a genuinely stale seat. ----- */
+
+.clean-ui .table-recovery {
+  display: grid;
+  width: min(620px, calc(100% - 8px));
+  gap: 8px;
+  margin: 10px auto 0;
+  padding: 10px 12px;
+  border: 1px solid #c2986261;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #2c2820df, #182522e8);
+  box-shadow: 0 8px 22px #0005;
+}
+
+.clean-ui .table-recovery > div:first-child {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.clean-ui .table-recovery > div:first-child > svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  color: #d5b779;
+}
+
+.clean-ui .table-recovery > div:first-child > span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.clean-ui .table-recovery strong {
+  color: #e2d2ad;
+  font-size: 11px;
+}
+
+.clean-ui .table-recovery small {
+  color: #aeb9ae;
+  font-size: 9px;
+  line-height: 1.25;
+}
+
+.clean-ui .table-recovery > button,
+.clean-ui .table-recovery-actions > button {
+  min-height: 40px;
+  border: 1px solid #b99f6c59;
+  border-radius: 8px;
+  padding: 0 12px;
+  background: #263732;
+  color: #dfdac8;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.clean-ui .table-recovery-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.clean-ui .table-recovery-actions > button.restart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-color: #c980736b;
+  background: #54302e;
+  color: #f0cfc4;
+}
+
+.clean-ui .table-recovery-actions svg {
+  width: 14px;
+  height: 14px;
+}
+
+.clean-ui .table-recovery-note {
+  text-align: center;
+}
+
+/* ----- Final touch/readability rules. ----- */
+
+.clean-ui button:focus-visible,
+.clean-ui a:focus-visible,
+.clean-ui input:focus-visible,
+.clean-ui select:focus-visible {
+  outline: 2px solid #efd58a;
+  outline-offset: 2px;
+}
+
+.clean-ui button,
+.clean-ui a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 600px) {
+  .clean-ui .table-vote-reveal {
+    width: 61%;
+    max-height: 62%;
+    gap: 6px;
+    padding: 9px;
+    border-radius: 11px;
+  }
+
+  .clean-ui .vote-reveal-heading strong {
+    font-size: 16px;
+  }
+
+  .clean-ui .vote-reveal-grid {
+    gap: 3px;
+  }
+
+  .clean-ui .vote-reveal-grid > span {
+    min-height: 22px;
+    gap: 4px;
+    padding: 3px 4px;
+  }
+
+  .clean-ui .vote-reveal-grid b {
+    font-size: 7px;
+  }
+
+  .clean-ui .phase-countdown {
+    min-height: 24px;
+    padding: 3px 7px;
+    font-size: 8px;
+  }
+
+  .clean-ui .team-summary-bar,
+  .clean-ui .auto-transition-bar,
+  .clean-ui .table-recovery {
+    width: calc(100% - 4px);
+  }
+
+  .clean-ui .team-summary-bar {
+    min-height: 34px;
+    margin-top: 7px;
+    border-radius: 9px;
+  }
+
+  .clean-ui .team-summary-bar strong,
+  .clean-ui .team-summary-bar small {
+    font-size: 9px;
+  }
+
+  .clean-ui .phase-result {
+    margin-top: 8px;
+    padding: 13px 12px 18px;
+  }
+
+  .clean-ui .phase-result h2 {
+    margin-block: 3px 8px;
+    font-size: 24px;
+  }
+
+  .clean-ui .table-assassination-confirm {
+    width: 54%;
+    padding: 9px;
+  }
+
+  .clean-ui .table-assassination-confirm > strong {
+    font-size: 15px;
+  }
+
+  .clean-ui .table-assassination-confirm > button {
+    min-height: 42px;
+    padding-inline: 6px;
+    font-size: 9px;
+  }
+
+  .clean-ui .table-recovery {
+    padding: 9px 10px;
+  }
+}
+
+@media (max-width: 390px) {
+  .clean-ui .table-vote-reveal {
+    width: 59%;
+    max-height: 60%;
+    padding: 8px;
+  }
+
+  .clean-ui .vote-reveal-heading small {
+    display: none;
+  }
+
+  .clean-ui .vote-reveal-grid > span {
+    min-height: 20px;
+  }
+
+  .clean-ui .vote-reveal-grid svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .clean-ui .table-assassination-confirm {
+    width: 52%;
+  }
+}

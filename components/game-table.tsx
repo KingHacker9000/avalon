@@ -18,10 +18,16 @@ import {
   Sword,
   Users,
 } from 'lucide-react';
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import type { RoomView } from '@/lib/game/engine';
 import { ROLES } from '@/lib/game/roles';
 import { QuestCardHand } from '@/components/quest-card-hand';
+import {
+  AssassinationConfirm,
+  PhaseCountdown,
+  TableRecovery,
+  VoteReveal,
+} from '@/components/game-phase-overlays';
 
 const AVATARS = [
   { name: 'Crown', Icon: Crown },
@@ -91,9 +97,9 @@ export function GameTable({
     'idle',
   );
 
-  // The old action copy called the selectable pieces "pawns". The pieces are now
-  // public avatars; keep legacy page copy in sync without coupling the table to
-  // the parent page's local selection state.
+  /* app/page.tsx still contains two legacy labels from the original pawn UI.
+     Keep those labels and the active leave affordance accurate until the large
+     page shell is decomposed into phase components. */
   useEffect(() => {
     document.querySelectorAll('.phase-team h2, .target-name').forEach((node) => {
       if (node.textContent?.includes('pawn')) {
@@ -155,192 +161,245 @@ export function GameTable({
     }
   }
 
+  const teamNames = room.team
+    .map((id) => room.players.find((p) => p.id === id)?.name ?? 'Player')
+    .join(' · ');
+  const goodQuests = room.quests.filter((quest) => quest.success).length;
+  const failedQuests = room.quests.length - goodQuests;
+  const resultCountdownLabel =
+    goodQuests >= 3
+      ? 'Final choice in'
+      : failedQuests >= 3
+        ? 'Game ends in'
+        : 'Next quest in';
+  const assassinationTarget =
+    room.phase === 'assassinate' && room.me.role === 'Assassin'
+      ? selected[0]
+      : undefined;
+
   return (
-    <section
-      className="tabletop"
-      aria-label="Round table"
-      data-seat-count={seats}
-      data-phase={room.phase}
-    >
-      <div className="tabletop-center">
-        {children || (
-          <div className="table-lobby-center">
-            <div className="table-brand-lockup">
-              <Crown aria-hidden="true" />
-              <span className="table-brand">AVALON</span>
-              <span
-                className="table-seat-count"
-                aria-label={`${room.players.length} of ${room.capacity} seats filled`}
-              >
-                <Users />
-                {room.players.length}/{room.capacity}
-              </span>
-            </div>
-            {me && (
-              <div className="avatar-picker">
-                <span className="avatar-picker-title">Choose your public avatar</span>
-                <div className="avatar-options" role="radiogroup" aria-label="Public avatar">
-                  {AVATARS.map(({ name }, avatar) => {
-                    const active = avatar === avatarChoice;
-                    const taken = !active && takenAvatars.has(avatar);
-                    return (
-                      <label
-                        key={name}
-                        title={taken ? `${name} — taken` : name}
-                        style={{
-                          position: 'relative',
-                          display: 'grid',
-                          minWidth: 0,
-                          minHeight: 34,
-                          placeItems: 'center',
-                          border: active
-                            ? '1px solid #f0cf7a'
-                            : '1px solid transparent',
-                          borderRadius: '50%',
-                          boxShadow: active ? '0 0 0 2px #e2bf6840' : 'none',
-                          cursor:
-                            avatarState === 'saving'
-                              ? 'wait'
-                              : taken
-                                ? 'not-allowed'
-                                : 'pointer',
-                          opacity:
-                            taken || (avatarState === 'saving' && !active) ? 0.38 : 1,
-                        }}
-                      >
-                        <input
-                          type="radio"
-                          name="public-avatar"
-                          value={avatar}
-                          checked={active}
-                          disabled={avatarState === 'saving' || taken}
-                          aria-label={taken ? `${name}, taken` : name}
-                          onChange={() => void chooseAvatar(avatar)}
-                          style={{
-                            position: 'absolute',
-                            width: 1,
-                            height: 1,
-                            opacity: 0,
-                            pointerEvents: 'none',
-                          }}
-                        />
-                        <AvatarMedallion avatar={avatar} compact />
-                      </label>
-                    );
-                  })}
-                </div>
-                <small
-                  className={avatarState === 'error' ? 'evil' : ''}
-                  aria-live="polite"
-                >
-                  {avatarState === 'saving'
-                    ? 'Saving…'
-                    : avatarState === 'saved'
-                      ? 'Avatar saved'
-                      : avatarState === 'error'
-                        ? 'Could not save. Try again.'
-                        : 'Each player gets a distinct public crest.'}
-                </small>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-      <QuestCardHand
-        key={`${room.code}:${room.round}:${room.history.length}:${room.team.join('.')}:${room.me.id}`}
-        room={room}
-      />
-      <fieldset
-        className="table-seats"
-        aria-label={onSelect ? 'Tap an avatar to choose a player' : 'Players at the table'}
+    <Fragment>
+      <section
+        className="tabletop"
+        aria-label="Round table"
+        data-seat-count={seats}
+        data-phase={room.phase}
       >
-        {Array.from({ length: seats }, (_, i) => {
-          const p = room.players[i];
-          const angle = -Math.PI / 2 + (i * Math.PI * 2) / seats;
-          const radiusX = dense ? 42 : 39;
-          const radiusY = dense ? 40 : 41;
-          const style = {
-            left: `${50 + Math.cos(angle) * radiusX}%`,
-            top: `${50 + Math.sin(angle) * radiusY}%`,
-          } as CSSProperties;
-          if (!p)
-            return (
-              <div
-                key={`empty-${i}`}
-                className="table-seat empty-seat"
-                style={style}
-                aria-label={`Open seat ${i + 1}`}
-              >
-                <span className="empty-avatar-token" aria-hidden="true">
-                  <Plus />
-                </span>
-                <span>Open</span>
-              </div>
-            );
-
-          const chosen = selected.includes(p.id);
-          const leader = p.id === (lobby ? room.host : room.leader);
-          const isMe = p.id === room.me.id;
-          const avatar = isMe ? avatarChoice : p.avatar;
-          const knowledge = privateInfoAvailable
-            ? room.me.knowledge.find((k) => k.id === p.id)
-            : undefined;
-          const privateClue = knowledge
-            ? room.me.role === 'Percival'
-              ? 'Possible Merlin'
-              : 'Known evil'
-            : '';
-          const shortClue = knowledge?.label === 'Evil' ? 'Evil' : 'Merlin?';
-          const myRole = isMe && privateInfoAvailable ? room.me.role : undefined;
-          const selectable = Boolean(onSelect && eligible.includes(p.id));
-
-          return (
-            <button
-              key={p.id}
-              style={style}
-              className={`table-seat ${chosen ? 'chosen' : ''} ${isMe ? 'my-seat' : ''} ${selectable ? 'selectable' : ''}`}
-              disabled={!selectable}
-              aria-pressed={onSelect ? chosen : undefined}
-              aria-label={`${p.name}${isMe ? ', you' : ''}${leader ? ', leader' : ''}${chosen ? ', selected for quest' : ''}${lobby && p.ready ? ', ready' : ''}${!p.online && !p.bot ? ', reconnecting' : ''}${privateClue ? `, ${privateClue}` : ''}`}
-              title={p.name}
-              onClick={() => onSelect?.(p.id)}
-            >
-              {privateClue && (
+        <div className="tabletop-center">
+          {children || (
+            <div className="table-lobby-center">
+              <div className="table-brand-lockup">
+                <Crown aria-hidden="true" />
+                <span className="table-brand">AVALON</span>
                 <span
-                  className={`private-knowledge-tag ${knowledge?.label === 'Evil' ? 'evil' : 'clue'}`}
-                  title={privateClue}
+                  className="table-seat-count"
+                  aria-label={`${room.players.length} of ${room.capacity} seats filled`}
                 >
-                  <span className="clue-long">{privateClue}</span>
-                  <span className="clue-short" aria-hidden="true">
-                    {shortClue}
-                  </span>
+                  <Users />
+                  {room.players.length}/{room.capacity}
                 </span>
+              </div>
+              {me && (
+                <div className="avatar-picker">
+                  <span className="avatar-picker-title">Choose your public avatar</span>
+                  <div className="avatar-options" role="radiogroup" aria-label="Public avatar">
+                    {AVATARS.map(({ name }, avatar) => {
+                      const active = avatar === avatarChoice;
+                      const taken = !active && takenAvatars.has(avatar);
+                      return (
+                        <label
+                          key={name}
+                          title={taken ? `${name} — taken` : name}
+                          style={{
+                            position: 'relative',
+                            display: 'grid',
+                            minWidth: 0,
+                            minHeight: 34,
+                            placeItems: 'center',
+                            border: active
+                              ? '1px solid #f0cf7a'
+                              : '1px solid transparent',
+                            borderRadius: '50%',
+                            boxShadow: active ? '0 0 0 2px #e2bf6840' : 'none',
+                            cursor:
+                              avatarState === 'saving'
+                                ? 'wait'
+                                : taken
+                                  ? 'not-allowed'
+                                  : 'pointer',
+                            opacity:
+                              taken || (avatarState === 'saving' && !active) ? 0.38 : 1,
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name="public-avatar"
+                            value={avatar}
+                            checked={active}
+                            disabled={avatarState === 'saving' || taken}
+                            aria-label={taken ? `${name}, taken` : name}
+                            onChange={() => void chooseAvatar(avatar)}
+                            style={{
+                              position: 'absolute',
+                              width: 1,
+                              height: 1,
+                              opacity: 0,
+                              pointerEvents: 'none',
+                            }}
+                          />
+                          <AvatarMedallion avatar={avatar} compact />
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <small
+                    className={avatarState === 'error' ? 'evil' : ''}
+                    aria-live="polite"
+                  >
+                    {avatarState === 'saving'
+                      ? 'Saving…'
+                      : avatarState === 'saved'
+                        ? 'Avatar saved'
+                        : avatarState === 'error'
+                          ? 'Could not save. Try again.'
+                          : 'Each player gets a distinct public crest.'}
+                  </small>
+                </div>
               )}
-              <span className="avatar-piece">
-                <AvatarMedallion avatar={avatar} />
-                {leader && (
-                  <span className="leader-coin" title={lobby ? 'Host' : 'Leader'}>
-                    <Crown />
+            </div>
+          )}
+        </div>
+
+        <VoteReveal room={room} />
+        <QuestCardHand
+          key={`${room.code}:${room.round}:${room.history.length}:${room.team.join('.')}:${room.me.id}`}
+          room={room}
+        />
+        {assassinationTarget && (
+          <AssassinationConfirm
+            key={assassinationTarget}
+            room={room}
+            targetId={assassinationTarget}
+          />
+        )}
+
+        <fieldset
+          className="table-seats"
+          aria-label={onSelect ? 'Tap an avatar to choose a player' : 'Players at the table'}
+        >
+          {Array.from({ length: seats }, (_, i) => {
+            const p = room.players[i];
+            const angle = -Math.PI / 2 + (i * Math.PI * 2) / seats;
+            const radiusX = dense ? 42 : 39;
+            const radiusY = dense ? 40 : 41;
+            const style = {
+              left: `${50 + Math.cos(angle) * radiusX}%`,
+              top: `${50 + Math.sin(angle) * radiusY}%`,
+            } as CSSProperties;
+            if (!p)
+              return (
+                <div
+                  key={`empty-${i}`}
+                  className="table-seat empty-seat"
+                  style={style}
+                  aria-label={`Open seat ${i + 1}`}
+                >
+                  <span className="empty-avatar-token" aria-hidden="true">
+                    <Plus />
+                  </span>
+                  <span>Open</span>
+                </div>
+              );
+
+            const chosen = selected.includes(p.id);
+            const leader = p.id === (lobby ? room.host : room.leader);
+            const isMe = p.id === room.me.id;
+            const avatar = isMe ? avatarChoice : p.avatar;
+            const knowledge = privateInfoAvailable
+              ? room.me.knowledge.find((k) => k.id === p.id)
+              : undefined;
+            const privateClue = knowledge
+              ? room.me.role === 'Percival'
+                ? 'Possible Merlin'
+                : 'Known evil'
+              : '';
+            const shortClue = knowledge?.label === 'Evil' ? 'Evil' : 'Merlin?';
+            const myRole = isMe && privateInfoAvailable ? room.me.role : undefined;
+            const selectable = Boolean(onSelect && eligible.includes(p.id));
+
+            return (
+              <button
+                key={p.id}
+                style={style}
+                className={`table-seat ${chosen ? 'chosen' : ''} ${isMe ? 'my-seat' : ''} ${selectable ? 'selectable' : ''}`}
+                disabled={!selectable}
+                aria-pressed={onSelect ? chosen : undefined}
+                aria-label={`${p.name}${isMe ? ', you' : ''}${leader ? ', leader' : ''}${chosen ? ', selected for quest' : ''}${lobby && p.ready ? ', ready' : ''}${!p.online && !p.bot ? ', reconnecting' : ''}${privateClue ? `, ${privateClue}` : ''}`}
+                title={p.name}
+                onClick={() => onSelect?.(p.id)}
+              >
+                {privateClue && (
+                  <span
+                    className={`private-knowledge-tag ${knowledge?.label === 'Evil' ? 'evil' : 'clue'}`}
+                    title={privateClue}
+                  >
+                    <span className="clue-long">{privateClue}</span>
+                    <span className="clue-short" aria-hidden="true">
+                      {shortClue}
+                    </span>
                   </span>
                 )}
-                {(chosen || (lobby && p.ready)) && (
-                  <span className="team-coin" title={lobby ? 'Ready' : 'Quest team'}>
-                    {lobby ? <Check /> : <Shield />}
+                <span className="avatar-piece">
+                  <AvatarMedallion avatar={avatar} />
+                  {leader && (
+                    <span className="leader-coin" title={lobby ? 'Host' : 'Leader'}>
+                      <Crown />
+                    </span>
+                  )}
+                  {(chosen || (lobby && p.ready)) && (
+                    <span className="team-coin" title={lobby ? 'Ready' : 'Quest team'}>
+                      {lobby ? <Check /> : <Shield />}
+                    </span>
+                  )}
+                  {!p.online && !p.bot && <Clock3 className="pawn-offline" />}
+                </span>
+                <span className="pawn-name">{p.name}</span>
+                {isMe && !myRole && <span className="pawn-you">you</span>}
+                {myRole && (
+                  <span className={`private-seat-note ${ROLES[myRole].side}`}>
+                    {ROLES[myRole].name}
                   </span>
                 )}
-                {!p.online && !p.bot && <Clock3 className="pawn-offline" />}
-              </span>
-              <span className="pawn-name">{p.name}</span>
-              {isMe && !myRole && <span className="pawn-you">you</span>}
-              {myRole && (
-                <span className={`private-seat-note ${ROLES[myRole].side}`}>
-                  {ROLES[myRole].name}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </fieldset>
-    </section>
+              </button>
+            );
+          })}
+        </fieldset>
+      </section>
+
+      {room.phase === 'vote' && room.team.length > 0 && (
+        <output
+          className="team-summary-bar"
+          aria-label={`Quest team: ${teamNames}`}
+          title={teamNames}
+        >
+          <Shield aria-hidden="true" />
+          <span>
+            <strong>Quest team</strong>
+            <small>{teamNames}</small>
+          </span>
+        </output>
+      )}
+
+      {room.phase === 'result' && (
+        <div className="auto-transition-bar">
+          <PhaseCountdown
+            endsAt={room.phaseEndsAt}
+            prefix={resultCountdownLabel}
+          />
+        </div>
+      )}
+
+      <TableRecovery room={room} />
+    </Fragment>
   );
 }
