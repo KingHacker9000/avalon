@@ -1,16 +1,16 @@
 [Unit]
 Description=Avalon multiplayer web app
-After=network-online.target
-Wants=network-online.target
+After=network-online.target tailscaled.service
+Wants=network-online.target tailscaled.service
 
 [Service]
 Type=simple
-User=ubuntu
-Group=ubuntu
+User=ashish
+Group=ashish
 WorkingDirectory=/srv/avalon/current
 Environment=NODE_ENV=production
 Environment=AVALON_DATA_DIR=/var/lib/avalon
-ExecStart=/usr/bin/npm start
+ExecStart=/usr/bin/npm exec -- vinext start -H 100.113.112.87 -p 4173
 Restart=always
 RestartSec=3
 TimeoutStopSec=20
