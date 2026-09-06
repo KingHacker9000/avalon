@@ -10,6 +10,7 @@ Group=ashish
 WorkingDirectory=/srv/avalon/current
 Environment=NODE_ENV=production
 Environment=AVALON_DATA_DIR=/var/lib/avalon
+Environment=PATH=/opt/node-v24/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=/srv/avalon/current/node_modules/.bin/vinext start -H 100.113.112.87 -p 4173
 Restart=always
 RestartSec=3
