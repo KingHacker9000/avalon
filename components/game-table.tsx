@@ -34,9 +34,11 @@ type StoredSession = { code: string; token: string };
 function AvatarMedallion({
   avatar,
   className = '',
+  compact = false,
 }: {
   avatar: number;
   className?: string;
+  compact?: boolean;
 }) {
   const entry = AVATARS[avatar] ?? AVATARS[0];
   const Icon = entry.Icon;
@@ -45,9 +47,10 @@ function AvatarMedallion({
       className={`public-avatar avatar-${avatar} ${className}`}
       aria-hidden="true"
       title={entry.name}
+      style={compact ? { width: 30, height: 30 } : undefined}
     >
       <span className="avatar-rim" />
-      <Icon />
+      <Icon style={compact ? { width: 15, height: 15 } : undefined} />
     </span>
   );
 }
@@ -69,14 +72,11 @@ export function GameTable({
   const seats = lobby ? room.capacity : room.players.length;
   const me = room.players.find((p) => p.id === room.me.id);
   const privateInfoAvailable = room.phase !== 'reveal' || Boolean(me?.ready);
-  const [avatarChoice, setAvatarChoice] = useState(me?.avatar ?? 0);
+  const [avatarOverride, setAvatarOverride] = useState<number | null>(null);
+  const avatarChoice = avatarOverride ?? me?.avatar ?? 0;
   const [avatarState, setAvatarState] = useState<'idle' | 'saving' | 'saved' | 'error'>(
     'idle',
   );
-
-  useEffect(() => {
-    if (me) setAvatarChoice(me.avatar);
-  }, [me?.avatar]);
 
   // The old action copy called the selectable pieces "pawns". The pieces are now
   // public avatars; keep legacy page copy in sync without coupling the table to
@@ -93,8 +93,8 @@ export function GameTable({
 
   async function chooseAvatar(avatar: number) {
     if (!lobby || avatar === avatarChoice || avatarState === 'saving') return;
-    const previous = avatarChoice;
-    setAvatarChoice(avatar);
+    const previousOverride = avatarOverride;
+    setAvatarOverride(avatar);
     setAvatarState('saving');
     try {
       const raw = sessionStorage.getItem('avalon.session');
@@ -121,7 +121,7 @@ export function GameTable({
       setAvatarState('saved');
       window.setTimeout(() => setAvatarState('idle'), 1200);
     } catch {
-      setAvatarChoice(previous);
+      setAvatarOverride(previousOverride);
       setAvatarState('error');
       window.setTimeout(() => setAvatarState('idle'), 2200);
     }
@@ -150,19 +150,42 @@ export function GameTable({
                   {AVATARS.map(({ name }, avatar) => {
                     const active = avatar === avatarChoice;
                     return (
-                      <button
-                        type="button"
+                      <label
                         key={name}
-                        role="radio"
-                        aria-checked={active}
-                        aria-label={name}
                         title={name}
-                        className={active ? 'active' : ''}
-                        disabled={avatarState === 'saving'}
-                        onClick={() => void chooseAvatar(avatar)}
+                        style={{
+                          position: 'relative',
+                          display: 'grid',
+                          minWidth: 0,
+                          minHeight: 34,
+                          placeItems: 'center',
+                          border: active
+                            ? '1px solid #f0cf7a'
+                            : '1px solid transparent',
+                          borderRadius: '50%',
+                          boxShadow: active ? '0 0 0 2px #e2bf6840' : 'none',
+                          cursor: avatarState === 'saving' ? 'wait' : 'pointer',
+                          opacity: avatarState === 'saving' && !active ? 0.65 : 1,
+                        }}
                       >
-                        <AvatarMedallion avatar={avatar} />
-                      </button>
+                        <input
+                          type="radio"
+                          name="public-avatar"
+                          value={avatar}
+                          checked={active}
+                          disabled={avatarState === 'saving'}
+                          aria-label={name}
+                          onChange={() => void chooseAvatar(avatar)}
+                          style={{
+                            position: 'absolute',
+                            width: 1,
+                            height: 1,
+                            opacity: 0,
+                            pointerEvents: 'none',
+                          }}
+                        />
+                        <AvatarMedallion avatar={avatar} compact />
+                      </label>
                     );
                   })}
                 </div>
