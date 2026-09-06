@@ -1,0 +1,8 @@
+Fixes the three production issues found on a real phone:
+
+- preserve square character atlas cells on small screens and stack the selected character artwork above its copy instead of stretching it;
+- remove the manual player-count selector: standard rooms accept up to 10, the table grows with the lobby, and actual joined players determine the game split/quest rules;
+- make optional role choices adapt to the current lobby size instead of surfacing the vague overfilled-role error;
+- make the room code affordance explicitly copy the full invite URL, and make `?room=CODE` invitations show a name-only join flow.
+
+The patch was applied and validated on Node 24 with tests, typecheck, lint, and production build before being committed.
