@@ -11,6 +11,7 @@ import {
   joinRoom,
   makePlayer,
   publicView,
+  type Player,
   type Room,
 } from './engine.ts';
 const root = resolve(process.env.AVALON_DATA_DIR || '.data');
@@ -20,6 +21,7 @@ db.exec(
   'PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000; CREATE TABLE IF NOT EXISTS rooms(code TEXT PRIMARY KEY, state TEXT NOT NULL, updated INTEGER NOT NULL);',
 );
 const ttl = 24 * 60 * 60 * 1000;
+const publicAvatarCount = 12;
 function hash(token: string) {
   return createHash('sha256').update(token).digest('hex');
 }
@@ -40,6 +42,29 @@ function save(room: Room) {
   db.prepare(
     'INSERT INTO rooms VALUES(?,?,?) ON CONFLICT(code) DO UPDATE SET state=excluded.state,updated=excluded.updated',
   ).run(room.code, JSON.stringify(room), room.updated);
+}
+function chooseUnusedAvatar(players: Player[], ignoreId = '') {
+  const used = new Set(
+    players.filter((p) => p.id !== ignoreId).map((p) => p.avatar),
+  );
+  const choices = Array.from({ length: publicAvatarCount }, (_, i) => i).filter(
+    (avatar) => !used.has(avatar),
+  );
+  return choices.length ? choices[randomInt(choices.length)] : randomInt(publicAvatarCount);
+}
+function makeAvatarsDistinct(players: Player[]) {
+  const used = new Set<number>();
+  for (const player of players) {
+    if (player.avatar < publicAvatarCount && !used.has(player.avatar)) {
+      used.add(player.avatar);
+      continue;
+    }
+    player.avatar = chooseUnusedAvatar(
+      players.filter((candidate) => candidate.id === player.id || used.has(candidate.avatar)),
+      player.id,
+    );
+    used.add(player.avatar);
+  }
 }
 // Synchronous transactions serialize decisions across simultaneous requests.
 export function execute(input: Record<string, unknown>, bearer: string) {
@@ -65,7 +90,10 @@ export function execute(input: Record<string, unknown>, bearer: string) {
       }
       ensure(code, 'Could not create a room. Please try again.');
       const room = createRoom(code, player, action === 'practice');
-      if (room.practice) addPracticePlayers(room);
+      if (room.practice) {
+        addPracticePlayers(room);
+        makeAvatarsDistinct(room.players);
+      }
       save(room);
       output = { token: secret, room: publicView(room, player.id) };
     } else {
@@ -77,6 +105,7 @@ export function execute(input: Record<string, unknown>, bearer: string) {
       if (action === 'join') {
         const secret = token();
         const player = makePlayer(input.name, hash(secret));
+        player.avatar = chooseUnusedAvatar(room.players);
         joinRoom(room, player);
         room.updated = Date.now();
         room.revision++;
@@ -94,8 +123,12 @@ export function execute(input: Record<string, unknown>, bearer: string) {
           ensure(room.phase === 'lobby', 'Public avatars are locked after the game starts.');
           const avatar = Number(input.avatar);
           ensure(
-            Number.isInteger(avatar) && avatar >= 0 && avatar < 8,
+            Number.isInteger(avatar) && avatar >= 0 && avatar < publicAvatarCount,
             'Choose one of the available public avatars.',
+          );
+          ensure(
+            !room.players.some((p) => p.id !== player.id && p.avatar === avatar),
+            'That public avatar is already taken. Choose another.',
           );
           player.avatar = avatar;
           room.updated = Date.now();
