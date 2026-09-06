@@ -68,6 +68,7 @@ export function GameTable({
   const lobby = room.phase === 'lobby';
   const seats = lobby ? room.capacity : room.players.length;
   const me = room.players.find((p) => p.id === room.me.id);
+  const privateInfoAvailable = room.phase !== 'reveal' || Boolean(me?.ready);
   const [avatarChoice, setAvatarChoice] = useState(me?.avatar ?? 0);
   const [avatarState, setAvatarState] = useState<'idle' | 'saving' | 'saved' | 'error'>(
     'idle',
@@ -209,13 +210,15 @@ export function GameTable({
           const leader = p.id === (lobby ? room.host : room.leader);
           const isMe = p.id === room.me.id;
           const avatar = isMe ? avatarChoice : p.avatar;
-          const knowledge = room.me.knowledge.find((k) => k.id === p.id);
+          const knowledge = privateInfoAvailable
+            ? room.me.knowledge.find((k) => k.id === p.id)
+            : undefined;
           const privateClue = knowledge
             ? room.me.role === 'Percival'
               ? 'Possible Merlin'
               : 'Known evil'
             : '';
-          const myRole = isMe ? room.me.role : undefined;
+          const myRole = isMe && privateInfoAvailable ? room.me.role : undefined;
 
           return (
             <button
