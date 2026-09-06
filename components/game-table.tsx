@@ -253,7 +253,7 @@ export function GameTable({
                 {!p.online && !p.bot && <Clock3 className="pawn-offline" />}
               </span>
               <span className="pawn-name">{p.name}</span>
-              {isMe && <span className="pawn-you">you</span>}
+              {isMe && !myRole && <span className="pawn-you">you</span>}
               {myRole && (
                 <span className={`private-seat-note ${ROLES[myRole].side}`}>
                   {ROLES[myRole].name}
