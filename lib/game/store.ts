@@ -154,7 +154,7 @@ function advanceTimedState(room: AvalonRoom, now: number) {
   tick(room, now);
 }
 
-function useLady(room: AvalonRoom, player: Player, targetId: unknown) {
+function performLadyCheck(room: AvalonRoom, player: Player, targetId: unknown) {
   const lady = ladyState(room);
   ensure(lady.enabled && lady.pending, 'The Lady of the Lake is not active now.');
   ensure(lady.holder === player.id, 'Only the Lady of the Lake holder may examine loyalty.');
@@ -361,7 +361,7 @@ export function execute(input: Record<string, unknown>, bearer: string) {
           advanceTimedState(room, now);
           room.updated = now;
         } else if (action === 'lady') {
-          useLady(room, player, input.target);
+          performLadyCheck(room, player, input.target);
           room.updated = now;
           room.revision++;
         } else {
