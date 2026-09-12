@@ -173,10 +173,6 @@ export function GameTable({
     };
   }, [ladyActive]);
 
-  useEffect(() => {
-    setLadyTarget('');
-  }, [lady.pending, lady.checks.length]);
-
   async function postTableAction(
     action: string,
     data: Record<string, unknown> = {},
@@ -263,6 +259,7 @@ export function GameTable({
     setLadyActionState('saving');
     try {
       await postTableAction('lady', { target: ladyTarget });
+      setLadyTarget('');
       setLadyActionState('saved');
       window.setTimeout(() => setLadyActionState('idle'), 1200);
     } catch {
